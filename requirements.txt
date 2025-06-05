@@ -1,0 +1,3 @@
+# MCP Kanka Server Dependencies
+mcp==1.1.3
+python-kanka==2.0.0

@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+
 from mcp_kanka.service import KankaService
 
 

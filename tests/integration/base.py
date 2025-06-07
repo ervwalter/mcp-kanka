@@ -6,8 +6,9 @@ import os
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from setup_test_env import setup_environment
 
@@ -22,7 +23,7 @@ class MCPIntegrationTestBase:
     """Base class for MCP integration tests that interact with the server via subprocess."""
 
     def __init__(self):
-        self.server_process: Optional[subprocess.Popen] = None
+        self.server_process: subprocess.Popen | None = None
         self.token = os.environ.get("KANKA_TOKEN")
         self.campaign_id = os.environ.get("KANKA_CAMPAIGN_ID")
         self._cleanup_tasks: list[tuple[str, Callable]] = []
@@ -80,7 +81,7 @@ class MCPIntegrationTestBase:
         self.server_process.stdin.write(json_str + "\\n")
         self.server_process.stdin.flush()
 
-    async def _read_response(self) -> Optional[dict[str, Any]]:
+    async def _read_response(self) -> dict[str, Any] | None:
         """Read a JSON-RPC response from the server."""
         if not self.server_process or not self.server_process.stdout:
             raise RuntimeError("Server not started")

@@ -1,7 +1,7 @@
 """MCP tool implementations for Kanka operations."""
 
 import logging
-from typing import Any, Optional, Union
+from typing import Any
 
 from .service import KankaService
 from .types import (
@@ -27,7 +27,7 @@ from .utils import (
 logger = logging.getLogger(__name__)
 
 # Global service instance (initialized on first use)
-_service: Optional[KankaService] = None
+_service: KankaService | None = None
 
 
 def get_service() -> KankaService:
@@ -38,7 +38,7 @@ def get_service() -> KankaService:
     return _service
 
 
-async def handle_find_entities(**params: Any) -> list[Union[EntityMinimal, EntityFull]]:
+async def handle_find_entities(**params: Any) -> list[EntityMinimal | EntityFull]:
     """
     Find entities by search and/or filtering.
 

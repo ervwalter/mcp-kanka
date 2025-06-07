@@ -3,7 +3,7 @@
 import re
 from datetime import datetime
 from difflib import SequenceMatcher
-from typing import Any, Optional
+from typing import Any
 
 
 def fuzzy_match_score(s1: str, s2: str) -> float:
@@ -122,7 +122,7 @@ def filter_entities_by_tags(
     return results
 
 
-def parse_date_from_entry(entry: str) -> Optional[datetime]:
+def parse_date_from_entry(entry: str) -> datetime | None:
     """
     Try to parse a date from an entry text.
 

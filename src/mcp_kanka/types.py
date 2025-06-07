@@ -1,6 +1,6 @@
 """Type definitions for the Kanka MCP server."""
 
-from typing import Literal, Optional, TypedDict
+from typing import Literal, TypedDict
 
 # Supported entity types
 EntityType = Literal[
@@ -26,16 +26,16 @@ class DateRange(TypedDict):
 class FindEntitiesParams(TypedDict, total=False):
     """Parameters for find_entities tool."""
 
-    query: Optional[str]
-    entity_type: Optional[EntityType]
-    name: Optional[str]
-    name_fuzzy: Optional[bool]
-    type: Optional[str]
-    tags: Optional[list[str]]
-    date_range: Optional[DateRange]
-    include_full: Optional[bool]
-    page: Optional[int]
-    limit: Optional[int]
+    query: str | None
+    entity_type: EntityType | None
+    name: str | None
+    name_fuzzy: bool | None
+    type: str | None
+    tags: list[str] | None
+    date_range: DateRange | None
+    include_full: bool | None
+    page: int | None
+    limit: int | None
 
 
 class EntityInput(TypedDict):
@@ -43,10 +43,10 @@ class EntityInput(TypedDict):
 
     entity_type: EntityType
     name: str
-    type: Optional[str]
-    entry: Optional[str]
-    tags: Optional[list[str]]
-    is_private: Optional[bool]
+    type: str | None
+    entry: str | None
+    tags: list[str] | None
+    is_private: bool | None
 
 
 class CreateEntitiesParams(TypedDict):
@@ -60,10 +60,10 @@ class EntityUpdate(TypedDict):
 
     entity_id: int
     name: str
-    type: Optional[str]
-    entry: Optional[str]
-    tags: Optional[list[str]]
-    is_private: Optional[bool]
+    type: str | None
+    entry: str | None
+    tags: list[str] | None
+    is_private: bool | None
 
 
 class UpdateEntitiesParams(TypedDict):
@@ -76,7 +76,7 @@ class GetEntitiesParams(TypedDict):
     """Parameters for get_entities tool."""
 
     entity_ids: list[int]
-    include_posts: Optional[bool]
+    include_posts: bool | None
 
 
 class DeleteEntitiesParams(TypedDict):
@@ -90,8 +90,8 @@ class PostInput(TypedDict):
 
     entity_id: int
     name: str
-    entry: Optional[str]
-    is_private: Optional[bool]
+    entry: str | None
+    is_private: bool | None
 
 
 class CreatePostsParams(TypedDict):
@@ -106,8 +106,8 @@ class PostUpdate(TypedDict):
     entity_id: int
     post_id: int
     name: str
-    entry: Optional[str]
-    is_private: Optional[bool]
+    entry: str | None
+    is_private: bool | None
 
 
 class UpdatePostsParams(TypedDict):
@@ -145,11 +145,11 @@ class EntityFull(TypedDict, total=False):
     entity_id: int
     name: str
     entity_type: EntityType
-    type: Optional[str]
-    entry: Optional[str]
+    type: str | None
+    entry: str | None
     tags: list[str]
     is_private: bool
-    match_score: Optional[float]  # Only when name_fuzzy=true
+    match_score: float | None  # Only when name_fuzzy=true
 
 
 class PostData(TypedDict):
@@ -157,25 +157,25 @@ class PostData(TypedDict):
 
     id: int
     name: str
-    entry: Optional[str]
+    entry: str | None
     is_private: bool
 
 
 class EntityWithPosts(EntityFull):
     """Entity with posts included."""
 
-    posts: Optional[list[PostData]]
+    posts: list[PostData] | None
 
 
 class CreateEntityResult(TypedDict):
     """Result of creating an entity."""
 
-    id: Optional[int]
-    entity_id: Optional[int]
+    id: int | None
+    entity_id: int | None
     name: str
-    mention: Optional[str]
+    mention: str | None
     success: bool
-    error: Optional[str]
+    error: str | None
 
 
 class UpdateEntityResult(TypedDict):
@@ -183,23 +183,23 @@ class UpdateEntityResult(TypedDict):
 
     entity_id: int
     success: bool
-    error: Optional[str]
+    error: str | None
 
 
 class GetEntityResult(TypedDict, total=False):
     """Result of getting an entity."""
 
-    id: Optional[int]
+    id: int | None
     entity_id: int
-    name: Optional[str]
-    entity_type: Optional[EntityType]
-    type: Optional[str]
-    entry: Optional[str]
-    tags: Optional[list[str]]
-    is_private: Optional[bool]
-    posts: Optional[list[PostData]]
+    name: str | None
+    entity_type: EntityType | None
+    type: str | None
+    entry: str | None
+    tags: list[str] | None
+    is_private: bool | None
+    posts: list[PostData] | None
     success: bool
-    error: Optional[str]
+    error: str | None
 
 
 class DeleteEntityResult(TypedDict):
@@ -207,16 +207,16 @@ class DeleteEntityResult(TypedDict):
 
     entity_id: int
     success: bool
-    error: Optional[str]
+    error: str | None
 
 
 class CreatePostResult(TypedDict):
     """Result of creating a post."""
 
-    post_id: Optional[int]
+    post_id: int | None
     entity_id: int
     success: bool
-    error: Optional[str]
+    error: str | None
 
 
 class UpdatePostResult(TypedDict):
@@ -225,7 +225,7 @@ class UpdatePostResult(TypedDict):
     entity_id: int
     post_id: int
     success: bool
-    error: Optional[str]
+    error: str | None
 
 
 class DeletePostResult(TypedDict):
@@ -234,7 +234,7 @@ class DeletePostResult(TypedDict):
     entity_id: int
     post_id: int
     success: bool
-    error: Optional[str]
+    error: str | None
 
 
 # Kanka context resource structure

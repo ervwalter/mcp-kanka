@@ -4,7 +4,7 @@
 
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 from kanka import KankaClient
 from kanka.exceptions import KankaException
@@ -71,7 +71,7 @@ class KankaService:
     def search_entities(
         self,
         query: str,
-        entity_type: Optional[EntityType] = None,
+        entity_type: EntityType | None = None,
         limit: int = 100,
     ) -> list[dict[str, Any]]:
         """
@@ -188,7 +188,7 @@ class KankaService:
 
     def get_entity_by_id(
         self, entity_id: int, include_posts: bool = False
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Get a specific entity by its entity_id.
 
@@ -280,10 +280,10 @@ class KankaService:
         self,
         entity_type: EntityType,
         name: str,
-        type: Optional[str] = None,
-        entry: Optional[str] = None,
-        tags: Optional[list[str]] = None,
-        is_private: Optional[bool] = None,
+        type: str | None = None,
+        entry: str | None = None,
+        tags: list[str] | None = None,
+        is_private: bool | None = None,
     ) -> dict[str, Any]:
         """
         Create a new entity.
@@ -340,10 +340,10 @@ class KankaService:
         self,
         entity_id: int,
         name: str,
-        type: Optional[str] = None,
-        entry: Optional[str] = None,
-        tags: Optional[list[str]] = None,
-        is_private: Optional[bool] = None,
+        type: str | None = None,
+        entry: str | None = None,
+        tags: list[str] | None = None,
+        is_private: bool | None = None,
     ) -> bool:
         """
         Update an existing entity.
@@ -425,7 +425,7 @@ class KankaService:
         self,
         entity_id: int,
         name: str,
-        entry: Optional[str] = None,
+        entry: str | None = None,
         is_private: bool = False,
     ) -> dict[str, Any]:
         """
@@ -472,8 +472,8 @@ class KankaService:
         entity_id: int,
         post_id: int,
         name: str,
-        entry: Optional[str] = None,
-        is_private: Optional[bool] = None,
+        entry: str | None = None,
+        is_private: bool | None = None,
     ) -> bool:
         """
         Update a post.
@@ -624,7 +624,7 @@ class KankaService:
             # Tags are returned as IDs, we need to resolve them to names
             tag_names = []
             for tag_item in entity.tags:
-                if isinstance(tag_item, (int, str)):
+                if isinstance(tag_item, int | str):
                     # It's a tag ID, need to look it up
                     tag_id = int(tag_item) if isinstance(tag_item, str) else tag_item
                     # Check cache first

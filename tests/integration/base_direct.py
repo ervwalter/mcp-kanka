@@ -2,7 +2,10 @@
 
 import asyncio
 import os
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
+
+from setup_test_env import setup_environment
 
 from mcp_kanka.resources import get_kanka_context
 from mcp_kanka.tools import (
@@ -15,7 +18,6 @@ from mcp_kanka.tools import (
     handle_update_entities,
     handle_update_posts,
 )
-from setup_test_env import setup_environment
 
 # Setup environment when module is imported
 setup_environment()

@@ -12,6 +12,11 @@ MCP (Model Context Protocol) server for Kanka API integration. This server provi
 - **Type Safety**: Full type hints and validation
 - **Client-side Filtering**: Enhanced filtering beyond API limitations
 
+## Requirements
+
+- Python 3.10 or higher
+- Kanka API token and campaign ID
+
 ## Installation
 
 ### From PyPI (when published)

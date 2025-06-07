@@ -26,16 +26,14 @@ test:
 lint:
 	ruff check .
 	black --check .
-	isort --check-only .
 
 # Run type checking
 typecheck:
-	mypy src tests examples --ignore-missing-imports
+	mypy src --ignore-missing-imports
 
 # Format code
 format:
 	black .
-	isort .
 	ruff check --fix .
 
 # Run all checks

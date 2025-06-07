@@ -36,14 +36,15 @@ make clean
 
 ## Architecture Design
 
-The MCP server should follow this structure:
+The MCP server follows this structure:
 
 1. **Server Entry Point** (`__main__.py`): MCP server initialization and tool registration
-2. **Tools Module** (`tools.py`): MCP tool implementations using @mcp.tool decorator
+2. **Tools Module** (`tools.py`): MCP tool implementations that handle parameters and call service methods
 3. **Kanka Service** (`service.py`): Business logic layer wrapping python-kanka client
 4. **Content Converter** (`converter.py`): Markdown ↔ HTML conversion with mention preservation
 5. **Types Module** (`types.py`): Type definitions for tool parameters and responses
-6. **Utils Module** (`utils.py`): Shared utilities like fuzzy matching, filtering
+6. **Utils Module** (`utils.py`): Shared utilities like fuzzy matching, filtering, pagination
+7. **Resources Module** (`resources.py`): Provides the kanka://context resource
 
 ## Implementation Guidelines
 
@@ -76,11 +77,21 @@ Each MCP tool should:
 ### Client-Side Filtering
 
 Since Kanka API has limited server-side filtering:
-- Implement filtering in the service layer
-- Support fuzzy name matching using appropriate library
+- Implement filtering in the utils module
+- Support fuzzy name matching using rapidfuzz library
 - Filter by tags (AND logic - must have all specified tags)
 - Filter by type field (exact or fuzzy match)
 - Date range filtering for journals
+- Name filtering is done via API when possible (list endpoints support name parameter)
+
+### Search Implementation
+
+The find_entities tool now implements comprehensive content search:
+- When `query` is provided, fetches full entities and searches both names and content
+- Uses client-side filtering via `search_in_content()` function
+- When no entity type is specified, queries all supported types
+- Slower than API name filtering but provides full-text search capability
+- Falls back to efficient name-only filtering when only `name` parameter is used
 
 ## Testing Strategy
 
@@ -95,6 +106,20 @@ Since Kanka API has limited server-side filtering:
    - Test batch operation behavior
 
 3. **Test Data**: Use "Integration Test - DELETE ME" prefix for any test entities
+
+## Key Implementation Details
+
+### Service Layer Changes
+- `search_entities()` now uses list endpoints with name filtering instead of search API
+- Handles entity type mapping (e.g., 'organisation' in API vs 'organization' internally)
+- Implements pagination when fetching all entities (limit=0)
+- Properly tracks and cleans up test entities
+
+### Tool Implementation
+- `find_entities`: Now supports full content search - fetches entities and searches client-side
+- All tools use proper error handling with partial success patterns
+- Batch operations return individual success/error status for each item
+- Content search implemented via `search_in_content()` in utils.py
 
 ## Development Preferences
 
@@ -122,10 +147,11 @@ This ensures:
 
 ## MCP-Specific Considerations
 
-1. **Tool Registration**: Tools must be registered with proper descriptions and parameter schemas
-2. **Async Handling**: MCP tools are async - use proper async/await patterns
-3. **Response Format**: Follow MCP response conventions for structured data
-4. **Resource Exposure**: Implement the `kanka_context` resource as specified
+1. **Tool Registration**: Tools are registered with proper descriptions and parameter schemas
+2. **Async Handling**: All MCP tools and service methods use async/await patterns
+3. **Response Format**: Tools return structured data matching TypedDict definitions
+4. **Resource Exposure**: The `kanka://context` resource is implemented and provides Kanka information
+5. **Tool Naming**: MCP tools are prefixed with `mcp__kanka__` when accessed from Claude
 
 ## Environment Configuration
 
@@ -149,6 +175,21 @@ When implementing or modifying tools:
 2. Include parameter descriptions in tool schemas
 3. Document any limitations or workarounds
 4. Keep README.md updated with usage examples
+5. Update KANKA_CONTEXT.md if Kanka concepts change
+6. Note API limitations (e.g., search only searches names)
+
+## Testing Infrastructure
+
+### Integration Tests
+- Use `base_direct.py` for direct MCP server testing
+- Tests run the actual MCP server via subprocess
+- Cleanup tracking ensures all test entities are deleted
+- Test runner provides comprehensive summaries
+
+### Unit Tests  
+- Mock python-kanka client responses
+- Test all edge cases for filtering and conversion
+- Verify error handling and partial success patterns
 
 ## Performance Considerations
 

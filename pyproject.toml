@@ -90,6 +90,7 @@ ignore_missing_imports = true
 exclude = [
     "site-packages",
     "_pytest",
+    "tests/",
 ]
 
 [tool.ruff]

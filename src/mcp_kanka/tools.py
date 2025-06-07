@@ -60,26 +60,78 @@ async def handle_find_entities(**params: Any) -> list[Union[EntityMinimal, Entit
     page = params.get("page", 1)
     limit = params.get("limit", 25)
 
+    # Validate entity type if provided
+    valid_types = [
+        "character",
+        "creature",
+        "location",
+        "organization",
+        "race",
+        "note",
+        "journal",
+        "quest",
+    ]
+    if entity_type and entity_type not in valid_types:
+        logger.error(
+            f"Invalid entity_type: {entity_type}. Must be one of: {', '.join(valid_types)}"
+        )
+        return []
+
     service = get_service()
 
     try:
-        # Step 1: Get entities (either by search or list)
+        # Step 1: Get entities
         if query:
-            # Use search API (returns minimal data)
-            search_results = service.search_entities(query, entity_type, limit=1000)
+            # For content search, we need full entities
+            entities = []
 
-            if not include_full:
-                # Just return search results
-                entities = search_results
+            if entity_type:
+                # Search specific entity type
+                entity_objects = service.list_entities(entity_type, page=1, limit=0)
+                for obj in entity_objects:
+                    entity_dict = service._entity_to_dict(obj, entity_type)
+                    entities.append(entity_dict)
             else:
-                # Fetch full details for each result
-                entities = []
-                for result in search_results:
-                    full_entity = service.get_entity_by_id(result["entity_id"])
-                    if full_entity:
-                        entities.append(full_entity)
+                # Search across all entity types
+                from .types import EntityType
+
+                entity_types: list[EntityType] = [
+                    "character",
+                    "creature",
+                    "location",
+                    "organization",
+                    "race",
+                    "note",
+                    "journal",
+                    "quest",
+                ]
+                for et in entity_types:
+                    try:
+                        entity_objects = service.list_entities(et, page=1, limit=0)
+                        for obj in entity_objects:
+                            entity_dict = service._entity_to_dict(obj, et)
+                            entities.append(entity_dict)
+                    except Exception as e:
+                        logger.debug(f"Could not search {et}: {e}")
+                        continue
+
+            # Apply content search
+            entities = search_in_content(entities, query)
+
+            # If not including full details, strip to minimal data
+            if not include_full:
+                minimal_entities = []
+                for entity in entities:
+                    minimal_entities.append(
+                        {
+                            "entity_id": entity["entity_id"],
+                            "name": entity["name"],
+                            "entity_type": entity["entity_type"],
+                        }
+                    )
+                entities = minimal_entities
         else:
-            # List entities of specific type
+            # List entities of specific type (no search)
             if not entity_type:
                 # No entity type specified, can't list all
                 return []
@@ -109,9 +161,8 @@ async def handle_find_entities(**params: Any) -> list[Union[EntityMinimal, Entit
             if start and end:
                 entities = filter_journals_by_date_range(entities, start, end)
 
-        # If we used search but didn't get full details, search in content
-        if query and not include_full:
-            entities = search_in_content(entities, query)
+        # Don't apply content search if we already used the search API
+        # The search API already searched content
 
         # Step 3: Paginate results
         paginated, total_pages, total_items = paginate_results(entities, page, limit)
@@ -150,12 +201,55 @@ async def handle_create_entities(**params: Any) -> list[CreateEntityResult]:
     service = get_service()
 
     results = []
+    valid_types = [
+        "character",
+        "creature",
+        "location",
+        "organization",
+        "race",
+        "note",
+        "journal",
+        "quest",
+    ]
+
     for entity_input in entities:
+        entity_type = entity_input.get("entity_type")
+        entity_name = entity_input.get("name", "")
+
+        # Validate entity type
+        if not entity_type or entity_type not in valid_types:
+            logger.error(
+                f"Invalid entity_type '{entity_type}' for entity '{entity_name}'"
+            )
+            error_result: CreateEntityResult = {
+                "id": None,
+                "entity_id": None,
+                "name": entity_name,
+                "mention": None,
+                "success": False,
+                "error": f"Invalid entity_type '{entity_type}'. Must be one of: {', '.join(valid_types)}",
+            }
+            results.append(error_result)
+            continue
+
+        # Validate required fields
+        if not entity_name:
+            name_error: CreateEntityResult = {
+                "id": None,
+                "entity_id": None,
+                "name": "",
+                "mention": None,
+                "success": False,
+                "error": "Name is required",
+            }
+            results.append(name_error)
+            continue
+
         try:
             # Create entity
             created = service.create_entity(
-                entity_type=entity_input["entity_type"],
-                name=entity_input["name"],
+                entity_type=entity_type,
+                name=entity_name,
                 type=entity_input.get("type"),
                 entry=entity_input.get("entry"),
                 tags=entity_input.get("tags"),
@@ -174,7 +268,7 @@ async def handle_create_entities(**params: Any) -> list[CreateEntityResult]:
 
         except Exception as e:
             logger.error(f"Failed to create entity '{entity_input.get('name')}': {e}")
-            error_result: CreateEntityResult = {
+            create_error: CreateEntityResult = {
                 "id": None,
                 "entity_id": None,
                 "name": entity_input.get("name", ""),
@@ -182,7 +276,7 @@ async def handle_create_entities(**params: Any) -> list[CreateEntityResult]:
                 "success": False,
                 "error": str(e),
             }
-            results.append(error_result)
+            results.append(create_error)
 
     return results
 
@@ -202,11 +296,33 @@ async def handle_update_entities(**params: Any) -> list[UpdateEntityResult]:
 
     results = []
     for update in updates:
+        entity_id = update.get("entity_id")
+        name = update.get("name")
+
+        # Validate required fields
+        if not entity_id:
+            id_error: UpdateEntityResult = {
+                "entity_id": 0,
+                "success": False,
+                "error": "entity_id is required",
+            }
+            results.append(id_error)
+            continue
+
+        if not name:
+            name_error: UpdateEntityResult = {
+                "entity_id": entity_id,
+                "success": False,
+                "error": "name is required for updates (Kanka API requirement)",
+            }
+            results.append(name_error)
+            continue
+
         try:
             # Update entity
             success = service.update_entity(
-                entity_id=update["entity_id"],
-                name=update["name"],
+                entity_id=entity_id,
+                name=name,
                 type=update.get("type"),
                 entry=update.get("entry"),
                 tags=update.get("tags"),
@@ -222,12 +338,12 @@ async def handle_update_entities(**params: Any) -> list[UpdateEntityResult]:
 
         except Exception as e:
             logger.error(f"Failed to update entity {update['entity_id']}: {e}")
-            error_result: UpdateEntityResult = {
+            update_error: UpdateEntityResult = {
                 "entity_id": update["entity_id"],
                 "success": False,
                 "error": str(e),
             }
-            results.append(error_result)
+            results.append(update_error)
 
     return results
 

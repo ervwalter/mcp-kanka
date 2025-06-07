@@ -1,0 +1,10 @@
+# Don't commit the actual .env file with secrets
+.env
+
+# Test output files
+*_output.txt
+*_output.json
+
+# Python cache
+__pycache__/
+*.pyc

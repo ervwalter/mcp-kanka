@@ -7,7 +7,7 @@ import os
 from typing import Any, Optional
 
 from kanka import KankaClient
-from kanka.exceptions import KankaAPIException
+from kanka.exceptions import KankaException
 from kanka.models import (
     Character,
     Creature,
@@ -69,13 +69,19 @@ class KankaService:
         self._tag_cache: dict[str, Tag] = {}
 
     def search_entities(
-        self, query: str, entity_type: Optional[EntityType] = None, limit: int = 100
+        self,
+        query: str,
+        entity_type: Optional[EntityType] = None,
+        limit: int = 100,
     ) -> list[dict[str, Any]]:
         """
-        Search for entities using Kanka's search API.
+        Search for entities by name using list endpoints with filtering.
+
+        This uses the list endpoints with name filtering instead of the search API,
+        as they provide the same partial matching capability but with more control.
 
         Args:
-            query: Search query
+            query: Search query (matches partial names)
             entity_type: Optional entity type filter
             limit: Maximum results
 
@@ -83,36 +89,59 @@ class KankaService:
             List of minimal entity data
         """
         try:
-            # Kanka search returns minimal data
-            results = self.client.search(query, limit=limit)
-
-            # Filter by entity type if specified
-            if entity_type:
-                api_type = self.API_ENDPOINT_MAP[entity_type]
-                results = [r for r in results if r.entity_type == api_type]
-
-            # Convert to our format
             entities = []
-            for result in results:
-                # Map API entity type back to our type
-                our_type = None
-                for key, value in self.API_ENDPOINT_MAP.items():
-                    if value == result.entity_type:
-                        our_type = key
-                        break
 
-                if our_type:
+            if entity_type:
+                # Search specific entity type
+                manager = getattr(self.client, self.API_ENDPOINT_MAP[entity_type])
+
+                # Use name filter to search - it does partial matching!
+                results = manager.list(name=query, limit=limit)
+
+                for entity in results:
                     entities.append(
                         {
-                            "entity_id": result.entity_id,
-                            "name": result.name,
-                            "entity_type": our_type,
+                            "entity_id": entity.entity_id,
+                            "name": entity.name,
+                            "entity_type": entity_type,
                         }
                     )
+            else:
+                # Search across all entity types
+                # We'll need to query each type separately
+                remaining_limit = limit
+
+                for our_type, manager_name in self.API_ENDPOINT_MAP.items():
+                    if remaining_limit <= 0:
+                        break
+
+                    manager = getattr(self.client, manager_name)
+
+                    # Get up to remaining_limit results from this type
+                    type_limit = min(remaining_limit, 100)  # API max is 100
+
+                    try:
+                        results = manager.list(name=query, limit=type_limit)
+
+                        for entity in results:
+                            entities.append(
+                                {
+                                    "entity_id": entity.entity_id,
+                                    "name": entity.name,
+                                    "entity_type": our_type,
+                                }
+                            )
+
+                        remaining_limit -= len(results)
+
+                    except Exception as e:
+                        # Some entity types might not be available in the campaign
+                        logger.debug(f"Could not search {our_type}: {e}")
+                        continue
 
             return entities
 
-        except KankaAPIException as e:
+        except KankaException as e:
             logger.error(f"Search failed: {e}")
             raise
 
@@ -134,15 +163,26 @@ class KankaService:
             manager = getattr(self.client, self.API_ENDPOINT_MAP[entity_type])
 
             if limit == 0:
-                # Get all results
-                entities = manager.all()
+                # Get all results by using a high limit
+                # The API supports up to 100 per page, so we'll need to paginate
+                all_entities = []
+                current_page = 1
+                while True:
+                    batch = manager.list(page=current_page, limit=100)
+                    if not batch:
+                        break
+                    all_entities.extend(batch)
+                    if len(batch) < 100:
+                        break
+                    current_page += 1
+                entities = all_entities
             else:
                 # Get paginated results
                 entities = manager.list(page=page, limit=limit)
 
             return list(entities)
 
-        except KankaAPIException as e:
+        except KankaException as e:
             logger.error(f"List entities failed: {e}")
             raise
 
@@ -160,44 +200,62 @@ class KankaService:
             Entity data with converted content
         """
         try:
-            # First, we need to find which type this entity is
-            # We'll use the search API with a very specific query
-            search_results = self.client.search(str(entity_id), limit=100)
+            # Get all recent entities since we can't filter by ID directly
+            page = 1
+            found_entity = None
 
-            # Find the entity with matching entity_id
-            entity_info = None
-            for result in search_results:
-                if result.entity_id == entity_id:
-                    entity_info = result
+            # Search through recent entities
+            while page <= 10 and not found_entity:  # Check up to 10 pages
+                batch = self.client.entities(page=page, limit=100)
+                if not batch:
                     break
 
-            if not entity_info:
+                for e in batch:
+                    # The 'id' field in entities response is the entity_id
+                    if e.get("id") == entity_id:
+                        found_entity = e
+                        break
+
+                if len(batch) < 100:
+                    break
+                page += 1
+
+            if not found_entity:
+                # Entity not found
                 return None
 
-            # Map API type to our type
+            # Get entity type - it's in the 'type' field
+            entity_type = found_entity.get("type")
+
+            # Map to our internal type
             our_type = None
-            for key, value in self.API_ENDPOINT_MAP.items():
-                if value == entity_info.entity_type:
-                    our_type = key
-                    break
-
-            if not our_type:
+            if entity_type == "character":
+                our_type = "character"
+            elif entity_type == "creature":
+                our_type = "creature"
+            elif entity_type == "location":
+                our_type = "location"
+            elif entity_type == "organisation":
+                our_type = "organization"
+            elif entity_type == "race":
+                our_type = "race"
+            elif entity_type == "note":
+                our_type = "note"
+            elif entity_type == "journal":
+                our_type = "journal"
+            elif entity_type == "quest":
+                our_type = "quest"
+            else:
                 return None
 
-            # Now get the full entity
+            # Get the type-specific ID from child_id
+            type_id = found_entity.get("child_id")
+            if not type_id:
+                return None
+
+            # Now get the full entity using the type-specific manager
             manager = getattr(self.client, self.API_ENDPOINT_MAP[our_type])
-
-            # The entity's type-specific ID should match its entity_id in most cases
-            # But we need to list and find it
-            entities = manager.list(limit=100)
-            entity = None
-            for e in entities:
-                if e.entity_id == entity_id:
-                    entity = e
-                    break
-
-            if not entity:
-                return None
+            entity = manager.get(type_id)
 
             # Convert to our format
             result = self._entity_to_dict(entity, our_type)
@@ -205,7 +263,8 @@ class KankaService:
             # Get posts if requested
             if include_posts:
                 try:
-                    posts = manager.posts.list(entity.id, limit=100)
+                    # Use entity_id, not the type-specific id
+                    posts = manager.list_posts(entity_id, limit=100)
                     result["posts"] = [self._post_to_dict(post) for post in posts]
                 except Exception as e:
                     logger.warning(f"Failed to get posts for entity {entity_id}: {e}")
@@ -254,7 +313,7 @@ class KankaService:
                 data["entry"] = self.converter.markdown_to_html(entry)
 
             if is_private is not None:
-                data["is_private"] = str(is_private).lower()
+                data["is_private"] = is_private
             elif entity_type == "note":
                 # Notes default to private
                 data["is_private"] = True
@@ -273,7 +332,7 @@ class KankaService:
 
             return result
 
-        except KankaAPIException as e:
+        except KankaException as e:
             logger.error(f"Create entity failed: {e}")
             raise
 
@@ -320,7 +379,7 @@ class KankaService:
                 data["entry"] = self.converter.markdown_to_html(entry)
 
             if is_private is not None:
-                data["is_private"] = str(is_private).lower()
+                data["is_private"] = is_private
 
             # Handle tags
             if tags is not None:
@@ -396,8 +455,8 @@ class KankaService:
             if entry:
                 data["entry"] = self.converter.markdown_to_html(entry)
 
-            # Create post
-            post = manager.posts.create(entity_data["id"], **data)
+            # Create post - use entity_id, not the type-specific id
+            post = manager.create_post(entity_id, **data)
 
             return {
                 "post_id": post.id,
@@ -445,10 +504,10 @@ class KankaService:
                 data["entry"] = self.converter.markdown_to_html(entry)
 
             if is_private is not None:
-                data["is_private"] = str(is_private).lower()
+                data["is_private"] = int(is_private)
 
-            # Update post
-            manager.posts.update(entity_data["id"], post_id, **data)
+            # Update post - use entity_id, not the type-specific id
+            manager.update_post(entity_id, post_id, **data)
             return True
 
         except Exception as e:
@@ -475,8 +534,8 @@ class KankaService:
             entity_type = entity_data["entity_type"]
             manager = getattr(self.client, self.API_ENDPOINT_MAP[entity_type])
 
-            # Delete post
-            manager.posts.delete(entity_data["id"], post_id)
+            # Delete post - use entity_id, not the type-specific id
+            manager.delete_post(entity_id, post_id)
             return True
 
         except Exception as e:
@@ -519,9 +578,17 @@ class KankaService:
         """Load all tags into cache."""
         self._tag_cache = {}
         try:
-            tags = self.client.tags.all()
-            for tag in tags:
-                self._tag_cache[tag.name.lower()] = tag
+            # Get all tags by paginating through them
+            current_page = 1
+            while True:
+                batch = self.client.tags.list(page=current_page, limit=100)
+                if not batch:
+                    break
+                for tag in batch:
+                    self._tag_cache[tag.name.lower()] = tag
+                if len(batch) < 100:
+                    break
+                current_page += 1
         except Exception as e:
             logger.warning(f"Failed to load tag cache: {e}")
 
@@ -554,8 +621,36 @@ class KankaService:
 
         # Extract tag names
         if hasattr(entity, "tags") and entity.tags and isinstance(entity.tags, list):
-            # Tags might be a list of tag objects or IDs
-            result["tags"] = [str(tag) for tag in entity.tags]
+            # Tags are returned as IDs, we need to resolve them to names
+            tag_names = []
+            for tag_item in entity.tags:
+                if isinstance(tag_item, (int, str)):
+                    # It's a tag ID, need to look it up
+                    tag_id = int(tag_item) if isinstance(tag_item, str) else tag_item
+                    # Check cache first
+                    tag_name = None
+                    for _, cached_tag in self._tag_cache.items():
+                        if cached_tag.id == tag_id:
+                            tag_name = cached_tag.name
+                            break
+                    if tag_name:
+                        tag_names.append(tag_name)
+                    else:
+                        # Not in cache, need to fetch
+                        try:
+                            tag = self.client.tags.get(tag_id)
+                            tag_names.append(tag.name)
+                            self._tag_cache[tag.name.lower()] = tag
+                        except Exception:
+                            # If we can't resolve it, keep the ID as string
+                            tag_names.append(str(tag_item))
+                elif hasattr(tag_item, "name"):
+                    # It's a tag object
+                    tag_names.append(tag_item.name)
+                else:
+                    # Unknown format
+                    tag_names.append(str(tag_item))
+            result["tags"] = tag_names
 
         return result
 

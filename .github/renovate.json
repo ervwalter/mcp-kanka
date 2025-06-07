@@ -1,0 +1,78 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits",
+    ":rebaseStalePrs",
+    ":disableRateLimiting",
+    ":separateMajorReleases",
+    ":combinePatchMinorReleases",
+    ":ignoreUnstable"
+  ],
+  "timezone": "America/Chicago",
+  "assignees": [
+    "ervwalter"
+  ],
+  "gitAuthor": "Erv Walter <erv@ewal.net>",
+  "labels": [
+    "dependencies"
+  ],
+  "packageRules": [
+    {
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "minimumReleaseAge": "3 days",
+      "automerge": true,
+      "automergeType": "pr",
+      "extends": [
+        "schedule:weekends"
+      ]
+    },
+    {
+      "groupName": "Python development dependencies",
+      "matchFileNames": [
+        "dev-requirements.txt",
+        "test-requirements.txt"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "automerge": true
+    },
+    {
+      "groupName": "GitHub Actions",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Require manual review for major Python updates",
+      "matchManagers": [
+        "pip_requirements",
+        "pip_setup"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Pin exact versions for critical dependencies",
+      "matchPackageNames": [
+        "pydantic",
+        "requests"
+      ],
+      "rangeStrategy": "pin"
+    }
+  ]
+}

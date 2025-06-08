@@ -1,16 +1,16 @@
 """MCP tool implementations for Kanka operations."""
 
 import logging
+from datetime import datetime, timezone
 from typing import Any
 
 from .service import KankaService
 from .types import (
+    CheckEntityUpdatesResult,
     CreateEntityResult,
     CreatePostResult,
     DeleteEntityResult,
     DeletePostResult,
-    EntityFull,
-    EntityMinimal,
     GetEntityResult,
     UpdateEntityResult,
     UpdatePostResult,
@@ -38,7 +38,7 @@ def get_service() -> KankaService:
     return _service
 
 
-async def handle_find_entities(**params: Any) -> list[EntityMinimal | EntityFull]:
+async def handle_find_entities(**params: Any) -> dict[str, Any]:
     """
     Find entities by search and/or filtering.
 
@@ -46,12 +46,13 @@ async def handle_find_entities(**params: Any) -> list[EntityMinimal | EntityFull
         **params: Parameters from FindEntitiesParams
 
     Returns:
-        List of entities
+        Dictionary with entities and sync_info
     """
     # Parse parameters
     query = params.get("query")
     entity_type = params.get("entity_type")
     name_filter = params.get("name")
+    name_exact = params.get("name_exact", False)
     name_fuzzy = params.get("name_fuzzy", False)
     type_filter = params.get("type")
     tags = params.get("tags", [])
@@ -59,6 +60,7 @@ async def handle_find_entities(**params: Any) -> list[EntityMinimal | EntityFull
     include_full = params.get("include_full", True)
     page = params.get("page", 1)
     limit = params.get("limit", 25)
+    last_synced = params.get("last_synced")
 
     # Validate entity type if provided
     valid_types = [
@@ -75,7 +77,7 @@ async def handle_find_entities(**params: Any) -> list[EntityMinimal | EntityFull
         logger.error(
             f"Invalid entity_type: {entity_type}. Must be one of: {', '.join(valid_types)}"
         )
-        return []
+        return {"entities": [], "sync_info": {}}
 
     service = get_service()
 
@@ -87,7 +89,9 @@ async def handle_find_entities(**params: Any) -> list[EntityMinimal | EntityFull
 
             if entity_type:
                 # Search specific entity type
-                entity_objects = service.list_entities(entity_type, page=1, limit=0)
+                entity_objects = service.list_entities(
+                    entity_type, page=1, limit=0, last_sync=last_synced
+                )
                 for obj in entity_objects:
                     entity_dict = service._entity_to_dict(obj, entity_type)
                     entities.append(entity_dict)
@@ -107,7 +111,9 @@ async def handle_find_entities(**params: Any) -> list[EntityMinimal | EntityFull
                 ]
                 for et in entity_types:
                     try:
-                        entity_objects = service.list_entities(et, page=1, limit=0)
+                        entity_objects = service.list_entities(
+                            et, page=1, limit=0, last_sync=last_synced
+                        )
                         for obj in entity_objects:
                             entity_dict = service._entity_to_dict(obj, et)
                             entities.append(entity_dict)
@@ -134,10 +140,12 @@ async def handle_find_entities(**params: Any) -> list[EntityMinimal | EntityFull
             # List entities of specific type (no search)
             if not entity_type:
                 # No entity type specified, can't list all
-                return []
+                return {"entities": [], "sync_info": {}}
 
             # Get all entities of this type
-            entity_objects = service.list_entities(entity_type, page=1, limit=0)
+            entity_objects = service.list_entities(
+                entity_type, page=1, limit=0, last_sync=last_synced
+            )
 
             # Convert to dictionaries
             entities = []
@@ -147,7 +155,9 @@ async def handle_find_entities(**params: Any) -> list[EntityMinimal | EntityFull
 
         # Step 2: Apply client-side filters
         if name_filter:
-            entities = filter_entities_by_name(entities, name_filter, name_fuzzy)
+            entities = filter_entities_by_name(
+                entities, name_filter, exact=name_exact, fuzzy=name_fuzzy
+            )
 
         if type_filter:
             entities = filter_entities_by_type(entities, type_filter)
@@ -167,10 +177,27 @@ async def handle_find_entities(**params: Any) -> list[EntityMinimal | EntityFull
         # Step 3: Paginate results
         paginated, total_pages, total_items = paginate_results(entities, page, limit)
 
-        # Step 4: Format results based on include_full
+        # Step 4: Calculate sync metadata
+        # Find newest updated_at timestamp
+        newest_updated_at = None
+        for entity in paginated:
+            if entity.get("updated_at") and (
+                newest_updated_at is None or entity["updated_at"] > newest_updated_at
+            ):
+                newest_updated_at = entity["updated_at"]
+
+        # Build sync info
+        sync_info = {
+            "request_timestamp": datetime.now(timezone.utc).isoformat(),
+            "newest_updated_at": newest_updated_at,
+            "total_count": total_items,
+            "returned_count": len(paginated),
+        }
+
+        # Step 5: Format results based on include_full
         if not include_full:
             # Return minimal data
-            return [
+            formatted_entities = [
                 {
                     "entity_id": e["entity_id"],
                     "name": e["name"],
@@ -180,7 +207,13 @@ async def handle_find_entities(**params: Any) -> list[EntityMinimal | EntityFull
             ]
         else:
             # Return full data
-            return paginated
+            formatted_entities = paginated
+
+        # Return the new response structure
+        return {
+            "entities": formatted_entities,
+            "sync_info": sync_info,
+        }
 
     except Exception as e:
         logger.error(f"find_entities failed: {e}")
@@ -378,6 +411,8 @@ async def handle_get_entities(**params: Any) -> list[GetEntityResult]:
                     "entry": entity.get("entry"),
                     "tags": entity.get("tags", []),
                     "is_private": entity.get("is_private", False),
+                    "created_at": entity.get("created_at"),
+                    "updated_at": entity.get("updated_at"),
                     "success": True,
                     "error": None,
                 }
@@ -582,3 +617,69 @@ async def handle_delete_posts(**params: Any) -> list[DeletePostResult]:
             results.append(error_result)
 
     return results
+
+
+async def handle_check_entity_updates(**params: Any) -> CheckEntityUpdatesResult:
+    """
+    Check which entity_ids have been modified since last sync.
+
+    Args:
+        **params: Parameters from CheckEntityUpdatesParams
+
+    Returns:
+        Check result with modified and deleted entity IDs
+    """
+    entity_ids = params.get("entity_ids", [])
+    last_synced = params.get("last_synced")
+    service = get_service()
+
+    if not last_synced:
+        raise ValueError("last_synced parameter is required")
+
+    modified_entity_ids = []
+    deleted_entity_ids = []
+
+    try:
+        # Get all entities using the entities endpoint
+        # This is more efficient than checking each entity individually
+        page = 1
+        all_entities = {}
+
+        while page <= 20:  # Reasonable limit to avoid infinite loops
+            batch = service.client.entities(page=page, limit=100)
+            if not batch:
+                break
+
+            for entity_data in batch:
+                entity_id = entity_data.get("id")
+                if entity_id:
+                    all_entities[entity_id] = entity_data
+
+            if len(batch) < 100:
+                break
+            page += 1
+
+        # Check each requested entity
+        for entity_id in entity_ids:
+            if entity_id in all_entities:
+                entity_data = all_entities[entity_id]
+                updated_at = entity_data.get("updated_at")
+
+                if updated_at and updated_at > last_synced:
+                    modified_entity_ids.append(entity_id)
+            else:
+                # Entity not found - might be deleted
+                deleted_entity_ids.append(entity_id)
+
+        # Get current timestamp
+        check_timestamp = datetime.now(timezone.utc).isoformat()
+
+        return {
+            "modified_entity_ids": modified_entity_ids,
+            "deleted_entity_ids": deleted_entity_ids,
+            "check_timestamp": check_timestamp,
+        }
+
+    except Exception as e:
+        logger.error(f"Check entity updates failed: {e}")
+        raise

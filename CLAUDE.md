@@ -181,10 +181,45 @@ When implementing or modifying tools:
 ## Testing Infrastructure
 
 ### Integration Tests
-- Use `base_direct.py` for direct MCP server testing
-- Tests run the actual MCP server via subprocess
-- Cleanup tracking ensures all test entities are deleted
+- **IMPORTANT**: Integration tests do NOT use pytest - they are run as standalone Python scripts
+- Use `base_direct.py` as the base class for all integration tests (inherits from `IntegrationTestBase`)
+- Tests call MCP tools directly via `self.call_tool()` method to simulate LLM interactions
+- Do NOT use helper methods like `self.create_entity()` - these don't exist in base_direct.py
+- Instead, use the full tool call pattern: `await self.call_tool("create_entities", entities=[{...}])`
+- Cleanup tracking ensures all test entities are deleted via `self.track_entity(entity_id)`
 - Test runner provides comprehensive summaries
+- **IMPORTANT**: When adding new integration test files, always add them to the `TEST_FILES` list in `tests/integration/run_integration_tests.py` to ensure they are included in the test suite
+
+#### Integration Test Patterns
+```python
+# CORRECT - Use call_tool directly
+result = await self.call_tool(
+    "create_entities",
+    entities=[
+        {
+            "entity_type": "character",
+            "name": "Integration Test - DELETE ME - Test Character",
+            "type": "NPC",
+        }
+    ],
+)
+self.track_entity(result[0]["entity_id"])
+
+# WRONG - Don't use helper methods that don't exist
+result = await self.create_entity(
+    entity_type="character",
+    name="Test Character",
+)
+```
+
+#### Name Filtering Behavior
+- **Default behavior (v1.1.0+)**: The `name` parameter does partial matching (e.g., "Test" matches "Test Character")
+- **Exact matching**: Use `name_exact=True` for exact name matches (case-insensitive)
+- **Fuzzy matching**: Use `name_fuzzy=True` for typo-tolerant matching (e.g., "Tset" matches "Test")
+- **Important**: The MCP service applies client-side filtering after API calls
+- When using `last_synced` parameter:
+  - The API returns all entities modified after the timestamp
+  - Then client-side filtering is applied based on name/name_exact/name_fuzzy settings
 
 ### Unit Tests  
 - Mock python-kanka client responses

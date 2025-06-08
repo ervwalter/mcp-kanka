@@ -29,6 +29,7 @@ class FindEntitiesParams(TypedDict, total=False):
     query: str | None
     entity_type: EntityType | None
     name: str | None
+    name_exact: bool | None
     name_fuzzy: bool | None
     type: str | None
     tags: list[str] | None
@@ -36,6 +37,7 @@ class FindEntitiesParams(TypedDict, total=False):
     include_full: bool | None
     page: int | None
     limit: int | None
+    last_synced: str | None  # ISO 8601 timestamp
 
 
 class EntityInput(TypedDict):
@@ -149,6 +151,8 @@ class EntityFull(TypedDict, total=False):
     entry: str | None
     tags: list[str]
     is_private: bool
+    created_at: str  # ISO 8601 timestamp
+    updated_at: str  # ISO 8601 timestamp
     match_score: float | None  # Only when name_fuzzy=true
 
 
@@ -165,6 +169,23 @@ class EntityWithPosts(EntityFull):
     """Entity with posts included."""
 
     posts: list[PostData] | None
+
+
+# Sync metadata structure
+class SyncInfo(TypedDict):
+    """Metadata about synchronization results."""
+
+    request_timestamp: str  # When this request was made
+    newest_updated_at: str | None  # Latest updated_at from returned entities
+    total_count: int  # Total matching entities (for pagination)
+    returned_count: int  # Number returned in this response
+
+
+class FindEntitiesResponse(TypedDict):
+    """Response structure for find_entities with sync metadata."""
+
+    entities: list[EntityMinimal | EntityFull]
+    sync_info: SyncInfo
 
 
 class CreateEntityResult(TypedDict):
@@ -197,6 +218,8 @@ class GetEntityResult(TypedDict, total=False):
     entry: str | None
     tags: list[str] | None
     is_private: bool | None
+    created_at: str | None  # ISO 8601 timestamp
+    updated_at: str | None  # ISO 8601 timestamp
     posts: list[PostData] | None
     success: bool
     error: str | None
@@ -273,3 +296,19 @@ class KankaContext(TypedDict):
     posts: str
     mentions: KankaContextMentions
     limitations: str
+
+
+# Check updates request/response
+class CheckEntityUpdatesParams(TypedDict):
+    """Parameters for check_entity_updates tool."""
+
+    entity_ids: list[int]
+    last_synced: str  # ISO 8601 timestamp
+
+
+class CheckEntityUpdatesResult(TypedDict):
+    """Result of checking entity updates."""
+
+    modified_entity_ids: list[int]
+    deleted_entity_ids: list[int]  # If API provides this
+    check_timestamp: str  # ISO 8601 timestamp

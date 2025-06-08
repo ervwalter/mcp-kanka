@@ -12,6 +12,7 @@ TEST_FILES = [
     "test_find_entities.py",
     "test_create_update_delete.py",
     "test_posts.py",
+    "test_sync_features.py",
 ]
 
 

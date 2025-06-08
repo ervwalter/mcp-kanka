@@ -1,5 +1,6 @@
 """Unit tests for the service module with mocked KankaClient."""
 
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -384,3 +385,93 @@ class TestKankaService:
 
         # Check new tag was created
         self.mock_client.tags.create.assert_called_once_with(name="new")
+
+    def test_entity_to_dict_with_timestamps(self):
+        """Test entity conversion includes timestamps."""
+        # Mock entity with timestamps
+        mock_entity = Mock()
+        mock_entity.id = 1
+        mock_entity.entity_id = 101
+        mock_entity.name = "Test Entity"
+        mock_entity.type = "NPC"
+        mock_entity.is_private = False
+        mock_entity.tags = []
+        mock_entity.entry = None
+        mock_entity.created_at = datetime(2023, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
+        mock_entity.updated_at = datetime(2023, 6, 15, 14, 30, 0, tzinfo=timezone.utc)
+
+        # Test conversion
+        result = self.service._entity_to_dict(mock_entity, "character")
+
+        assert result["created_at"] == "2023-01-01T10:00:00+00:00"
+        assert result["updated_at"] == "2023-06-15T14:30:00+00:00"
+
+    def test_entity_to_dict_missing_timestamps(self):
+        """Test entity conversion handles missing timestamps gracefully."""
+        # Mock entity without timestamps
+        mock_entity = Mock(
+            spec=["id", "entity_id", "name", "type", "is_private", "tags", "entry"]
+        )
+        mock_entity.id = 1
+        mock_entity.entity_id = 101
+        mock_entity.name = "Test Entity"
+        mock_entity.type = "NPC"
+        mock_entity.is_private = False
+        mock_entity.tags = []
+        mock_entity.entry = None
+        # No created_at or updated_at attributes
+
+        # Test conversion
+        result = self.service._entity_to_dict(mock_entity, "character")
+
+        assert result["created_at"] is None
+        assert result["updated_at"] is None
+
+    def test_list_entities_with_last_sync(self):
+        """Test list_entities passes lastSync parameter correctly."""
+        # Mock response
+        mock_entity = Mock()
+        mock_entity.id = 1
+        mock_entity.entity_id = 101
+        mock_entity.name = "Test Character"
+        mock_entity.updated_at = datetime(2023, 7, 1, 12, 0, 0, tzinfo=timezone.utc)
+
+        self.mock_client.characters.list.return_value = [mock_entity]
+
+        # Test with last_sync
+        last_sync_time = "2023-06-01T00:00:00Z"
+        entities = self.service.list_entities(
+            "character", page=1, limit=30, last_sync=last_sync_time
+        )
+
+        # Verify lastSync was passed
+        self.mock_client.characters.list.assert_called_with(
+            page=1, limit=30, lastSync=last_sync_time
+        )
+
+        assert len(entities) == 1
+        assert entities[0].id == 1
+
+    def test_list_entities_with_last_sync_pagination(self):
+        """Test list_entities with lastSync and pagination."""
+        # Mock paginated responses
+        mock_entities_page1 = [Mock(id=i, entity_id=100 + i) for i in range(1, 101)]
+        mock_entities_page2 = [Mock(id=i, entity_id=200 + i) for i in range(101, 151)]
+
+        self.mock_client.characters.list.side_effect = [
+            mock_entities_page1,
+            mock_entities_page2[:50],  # Only 50 items in page 2, so we know we're done
+        ]
+
+        # Test with limit=0 (get all) and last_sync
+        last_sync_time = "2023-06-01T00:00:00Z"
+        entities = self.service.list_entities(
+            "character", page=1, limit=0, last_sync=last_sync_time
+        )
+
+        # Verify pages were fetched with lastSync
+        assert self.mock_client.characters.list.call_count == 2
+        for call in self.mock_client.characters.list.call_args_list:
+            assert call[1].get("lastSync") == last_sync_time
+
+        assert len(entities) == 150

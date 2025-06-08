@@ -37,9 +37,15 @@ class TestFindEntities(IntegrationTestBase):
         await self.wait_for_api()
 
         # Now search for our test entities
-        results = await self.call_tool(
+        response = await self.call_tool(
             "find_entities", query="Integration Test", include_full=False, limit=10
         )
+
+        # Check response structure
+        self.assert_in("entities", response)
+        self.assert_in("sync_info", response)
+
+        results = response["entities"]
 
         # Should find at least our 2 entities
         self.assert_greater_than(len(results), 1, "Should find multiple entities")
@@ -74,12 +80,18 @@ class TestFindEntities(IntegrationTestBase):
         await self.wait_for_api()
 
         # Search for characters only
-        results = await self.call_tool(
+        response = await self.call_tool(
             "find_entities",
             query="Integration Test Fighter",
             entity_type="character",
             include_full=True,
         )
+
+        # Check response structure
+        self.assert_in("entities", response)
+        self.assert_in("sync_info", response)
+
+        results = response["entities"]
 
         # Should find our character
         self.assert_greater_than(len(results), 0, "Should find at least one character")
@@ -131,27 +143,45 @@ class TestFindEntities(IntegrationTestBase):
 
         await self.wait_for_api()
 
+        # Search with partial name filter (default)
+        response = await self.call_tool(
+            "find_entities",
+            entity_type="location",
+            name="Test Castle",  # Partial match
+            include_full=True,
+        )
+
+        results = response["entities"]
+
+        # Should find the castle
+        found_names = [r["name"] for r in results]
+        self.assert_in("Integration Test Castle - DELETE ME", found_names)
+
         # Search with exact name filter
-        results = await self.call_tool(
+        response = await self.call_tool(
             "find_entities",
             entity_type="location",
             name="Integration Test Castle - DELETE ME",
-            name_fuzzy=False,
+            name_exact=True,
             include_full=True,
         )
+
+        results = response["entities"]
 
         # Should find exactly one
         self.assert_equal(len(results), 1, "Should find exactly one castle")
         self.assert_equal(results[0]["name"], "Integration Test Castle - DELETE ME")
 
         # Search with fuzzy name filter
-        results = await self.call_tool(
+        response = await self.call_tool(
             "find_entities",
             entity_type="location",
             name="Integration Test Castel",  # Typo
             name_fuzzy=True,
             include_full=False,
         )
+
+        results = response["entities"]
 
         # Should find the castle despite typo
         found_names = [r["name"] for r in results]
@@ -184,9 +214,11 @@ class TestFindEntities(IntegrationTestBase):
         await self.wait_for_api()
 
         # Find only dragons
-        results = await self.call_tool(
+        response = await self.call_tool(
             "find_entities", entity_type="creature", type="Dragon", include_full=True
         )
+
+        results = response["entities"]
 
         # Check results
         dragon_found = False
@@ -233,12 +265,14 @@ class TestFindEntities(IntegrationTestBase):
         await self.wait_for_api()
 
         # Find entities with both "hero" and "test" tags
-        results = await self.call_tool(
+        response = await self.call_tool(
             "find_entities",
             entity_type="character",
             tags=["hero", "test"],
             include_full=True,
         )
+
+        results = response["entities"]
 
         # Should find Hero and Sidekick but not Villain
         found_names = [r["name"] for r in results if "Integration Test" in r["name"]]
@@ -269,7 +303,7 @@ class TestFindEntities(IntegrationTestBase):
         await self.wait_for_api()
 
         # Get first page with limit 5
-        page1 = await self.call_tool(
+        response1 = await self.call_tool(
             "find_entities",
             entity_type="note",
             name="Integration Test Note",
@@ -280,7 +314,7 @@ class TestFindEntities(IntegrationTestBase):
         )
 
         # Get second page
-        page2 = await self.call_tool(
+        response2 = await self.call_tool(
             "find_entities",
             entity_type="note",
             name="Integration Test Note",
@@ -289,6 +323,9 @@ class TestFindEntities(IntegrationTestBase):
             limit=5,
             include_full=False,
         )
+
+        page1 = response1["entities"]
+        page2 = response2["entities"]
 
         # Check we got different results
         page1_ids = [r["entity_id"] for r in page1]
@@ -334,9 +371,11 @@ class TestFindEntities(IntegrationTestBase):
         await self.wait_for_api()
 
         # Search for "artifact" - should find both journals (one in name, one in content)
-        results = await self.call_tool(
+        response = await self.call_tool(
             "find_entities", query="artifact", include_full=True
         )
+
+        results = response["entities"]
 
         # Should find at least the two journals with "artifact"
         artifact_count = 0
@@ -363,12 +402,14 @@ class TestFindEntities(IntegrationTestBase):
         )
 
         # Search for "archaeologist" - only in character's content
-        results = await self.call_tool(
+        response = await self.call_tool(
             "find_entities",
             query="archaeologist",
             entity_type="character",
             include_full=True,
         )
+
+        results = response["entities"]
 
         archaeologist_found = False
         for result in results:

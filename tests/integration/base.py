@@ -249,3 +249,36 @@ class MCPIntegrationTestBase:
     async def wait_for_api(self, seconds: float = 0.5):
         """Wait a bit to avoid rate limiting."""
         await asyncio.sleep(seconds)
+
+    # Helper methods for common operations
+    async def create_entity(self, **kwargs):
+        """Helper to create a single entity."""
+        result = await self.call_tool("create_entities", {"entities": [kwargs]})
+        if result and len(result) > 0:
+            if result[0]["success"]:
+                self.track_entity(result[0]["entity_id"])
+            return result[0]
+        raise RuntimeError("Failed to create entity")
+
+    async def find_entities(self, **kwargs):
+        """Helper to find entities."""
+        return await self.call_tool("find_entities", kwargs)
+
+    async def update_entity(self, entity_id: int, **kwargs):
+        """Helper to update an entity."""
+        update = {"entity_id": entity_id, **kwargs}
+        result = await self.call_tool("update_entities", {"updates": [update]})
+        if result and len(result) > 0:
+            return result[0]
+        raise RuntimeError("Failed to update entity")
+
+    async def delete_entity(self, entity_id: int):
+        """Helper to delete an entity."""
+        result = await self.call_tool("delete_entities", {"entity_ids": [entity_id]})
+        if result and len(result) > 0:
+            return result[0]
+        raise RuntimeError("Failed to delete entity")
+
+    async def check_entity_updates(self, **kwargs):
+        """Helper to check entity updates."""
+        return await self.call_tool("check_entity_updates", kwargs)

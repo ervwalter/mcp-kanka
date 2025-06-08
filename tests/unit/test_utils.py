@@ -67,9 +67,14 @@ class TestFilterEntitiesByName:
 
     def test_exact_name_filter(self):
         """Test exact name filtering."""
-        result = filter_entities_by_name(self.entities, "Alice", fuzzy=False)
-        assert len(result) == 1
-        assert result[0]["name"] == "Alice"
+        # Default is now partial matching
+        result = filter_entities_by_name(self.entities, "Alice")
+        assert len(result) == 2  # "Alice" and "Alice Cooper"
+
+        # Use exact=True for exact matching
+        result_exact = filter_entities_by_name(self.entities, "Alice", exact=True)
+        assert len(result_exact) == 1
+        assert result_exact[0]["name"] == "Alice"
 
     def test_fuzzy_name_filter(self):
         """Test fuzzy name filtering."""
@@ -90,9 +95,14 @@ class TestFilterEntitiesByName:
 
     def test_case_insensitive(self):
         """Test case insensitive matching."""
-        result = filter_entities_by_name(self.entities, "alice", fuzzy=False)
-        assert len(result) == 1
-        assert result[0]["name"] == "Alice"
+        # Default partial matching
+        result = filter_entities_by_name(self.entities, "alice")
+        assert len(result) == 2  # "Alice" and "Alice Cooper"
+
+        # Exact matching
+        result_exact = filter_entities_by_name(self.entities, "alice", exact=True)
+        assert len(result_exact) == 1
+        assert result_exact[0]["name"] == "Alice"
 
     def test_no_matches(self):
         """Test when no entities match."""

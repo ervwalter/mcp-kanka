@@ -28,6 +28,7 @@ dependencies = [
     "markdown>=3.5",
     "beautifulsoup4>=4.12",
     "python-dotenv>=1.0.0",
+    "markdownify>=0.11.6",
 ]
 
 [project.urls]
@@ -37,7 +38,7 @@ Repository = "https://github.com/ervwalter/mcp-kanka"
 Issues = "https://github.com/ervwalter/mcp-kanka/issues"
 
 [project.scripts]
-mcp-kanka = "mcp_kanka.__main__:main"
+mcp-kanka = "mcp_kanka.cli:run"
 
 [tool.setuptools.packages.find]
 where = ["src"]

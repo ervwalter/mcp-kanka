@@ -9,6 +9,7 @@ from setup_test_env import setup_environment
 
 from mcp_kanka.resources import get_kanka_context
 from mcp_kanka.tools import (
+    handle_check_entity_updates,
     handle_create_entities,
     handle_create_posts,
     handle_delete_entities,
@@ -43,6 +44,7 @@ class IntegrationTestBase:
             "create_posts": handle_create_posts,
             "update_posts": handle_update_posts,
             "delete_posts": handle_delete_posts,
+            "check_entity_updates": handle_check_entity_updates,
         }
 
         if tool_name not in tool_map:

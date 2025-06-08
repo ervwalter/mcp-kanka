@@ -28,16 +28,18 @@ def fuzzy_match_score(s1: str, s2: str) -> float:
 def filter_entities_by_name(
     entities: list[dict[str, Any]],
     name_filter: str,
+    exact: bool = False,
     fuzzy: bool = False,
     threshold: float = 0.7,
 ) -> list[dict[str, Any]]:
     """
-    Filter entities by name with optional fuzzy matching.
+    Filter entities by name with optional exact or fuzzy matching.
 
     Args:
         entities: List of entities
         name_filter: Name to filter by
-        fuzzy: Use fuzzy matching
+        exact: Use exact matching (case-insensitive)
+        fuzzy: Use fuzzy matching (similarity scoring)
         threshold: Minimum score for fuzzy matches
 
     Returns:
@@ -60,10 +62,14 @@ def filter_entities_by_name(
         # Sort by score descending
         results.sort(key=lambda x: x["match_score"], reverse=True)
         return results
-    else:
+    elif exact:
         # Exact match (case-insensitive)
         name_lower = name_filter.lower()
         return [e for e in entities if e.get("name", "").lower() == name_lower]
+    else:
+        # Partial match (case-insensitive) - default behavior matching API
+        name_lower = name_filter.lower()
+        return [e for e in entities if name_lower in e.get("name", "").lower()]
 
 
 def filter_entities_by_type(

@@ -18,6 +18,7 @@ from pydantic import AnyUrl
 
 from .resources import get_kanka_context
 from .tools import (
+    handle_check_entity_updates,
     handle_create_entities,
     handle_create_posts,
     handle_delete_entities,
@@ -93,11 +94,16 @@ async def list_tools() -> list[types.Tool]:
                     },
                     "name": {
                         "type": "string",
-                        "description": "Filter by name (can be combined with query)",
+                        "description": "Filter by name (partial match by default, e.g. 'Test' matches 'Test Character')",
+                    },
+                    "name_exact": {
+                        "type": "boolean",
+                        "description": "Use exact matching on name filter (case-insensitive)",
+                        "default": False,
                     },
                     "name_fuzzy": {
                         "type": "boolean",
-                        "description": "Use fuzzy matching on name filter",
+                        "description": "Use fuzzy matching on name filter (typo-tolerant)",
                         "default": False,
                     },
                     "type": {
@@ -131,6 +137,10 @@ async def list_tools() -> list[types.Tool]:
                         "type": "integer",
                         "description": "Results per page (default 25, max 100, use 0 for all)",
                         "default": 25,
+                    },
+                    "last_synced": {
+                        "type": "string",
+                        "description": "ISO 8601 timestamp to get only entities modified after this time",
                     },
                 },
             },
@@ -355,6 +365,25 @@ async def list_tools() -> list[types.Tool]:
                 "required": ["deletions"],
             },
         ),
+        types.Tool(
+            name="check_entity_updates",
+            description="Check which entity_ids have been modified since last sync",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "entity_ids": {
+                        "type": "array",
+                        "items": {"type": "integer"},
+                        "description": "Array of entity IDs to check",
+                    },
+                    "last_synced": {
+                        "type": "string",
+                        "description": "ISO 8601 timestamp to check updates since",
+                    },
+                },
+                "required": ["entity_ids", "last_synced"],
+            },
+        ),
     ]
 
 
@@ -381,6 +410,8 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextCont
             result = await handle_update_posts(**arguments)
         elif name == "delete_posts":
             result = await handle_delete_posts(**arguments)
+        elif name == "check_entity_updates":
+            result = await handle_check_entity_updates(**arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 

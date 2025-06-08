@@ -43,6 +43,8 @@ class TestFindEntities:
                 "entry": "A brave warrior test",
                 "tags": ["hero"],
                 "is_private": False,
+                "created_at": "2023-01-01T10:00:00Z",
+                "updated_at": "2023-01-01T10:00:00Z",
             },
             {
                 "id": 2,
@@ -53,6 +55,8 @@ class TestFindEntities:
                 "entry": "A cunning rogue",
                 "tags": ["rogue"],
                 "is_private": False,
+                "created_at": "2023-01-01T10:00:00Z",
+                "updated_at": "2023-01-01T10:00:00Z",
             },
             {
                 "id": 3,
@@ -63,6 +67,8 @@ class TestFindEntities:
                 "entry": "Another character",
                 "tags": [],
                 "is_private": False,
+                "created_at": "2023-01-01T10:00:00Z",
+                "updated_at": "2023-01-01T10:00:00Z",
             },
         ]
 
@@ -74,12 +80,19 @@ class TestFindEntities:
             limit=25,
         )
 
-        # Alice has "test" in entry, Charlie has "Test" in name
-        assert len(result) == 2
-        assert result[0]["name"] == "Alice"
-        assert result[1]["name"] == "Test Charlie"
+        # Check response structure
+        assert "entities" in result
+        assert "sync_info" in result
 
-        mock_service.list_entities.assert_called_once_with("character", page=1, limit=0)
+        entities = result["entities"]
+        # Alice has "test" in entry, Charlie has "Test" in name
+        assert len(entities) == 2
+        assert entities[0]["name"] == "Alice"
+        assert entities[1]["name"] == "Test Charlie"
+
+        mock_service.list_entities.assert_called_once_with(
+            "character", page=1, limit=0, last_sync=None
+        )
 
     @patch("mcp_kanka.tools.get_service")
     async def test_find_without_search_query(self, mock_get_service):
@@ -106,6 +119,8 @@ class TestFindEntities:
                 "tags": [],
                 "is_private": False,
                 "entry": None,
+                "created_at": "2023-01-01T10:00:00Z",
+                "updated_at": "2023-01-01T10:00:00Z",
             },
             {
                 "id": 2,
@@ -116,6 +131,8 @@ class TestFindEntities:
                 "tags": [],
                 "is_private": False,
                 "entry": None,
+                "created_at": "2023-01-01T10:00:00Z",
+                "updated_at": "2023-01-01T10:00:00Z",
             },
         ]
 
@@ -125,14 +142,18 @@ class TestFindEntities:
             include_full=True,
         )
 
-        assert len(result) == 2
-        assert result[0]["name"] == "Alice"
-        assert result[1]["name"] == "Bob"
+        entities = result["entities"]
+        assert len(entities) == 2
+        assert entities[0]["name"] == "Alice"
+        assert entities[1]["name"] == "Bob"
 
-        mock_service.list_entities.assert_called_once_with("character", page=1, limit=0)
+        mock_service.list_entities.assert_called_once_with(
+            "character", page=1, limit=0, last_sync=None
+        )
 
+    @patch("mcp_kanka.tools.filter_entities_by_name")
     @patch("mcp_kanka.tools.get_service")
-    async def test_find_with_filters(self, mock_get_service):
+    async def test_find_with_filters(self, mock_get_service, mock_filter_by_name):
         """Test finding entities with various filters."""
         # Mock service
         mock_service = Mock()
@@ -179,15 +200,32 @@ class TestFindEntities:
         ]
         mock_service.list_entities.return_value = entities
 
+        # Mock the filter function to return Alice
+        mock_filter_by_name.return_value = [
+            {
+                "id": 1,
+                "entity_id": 1,
+                "name": "Alice",
+                "entity_type": "character",
+                "type": "NPC",
+                "tags": ["hero", "warrior"],
+                "is_private": False,
+                "entry": "Brave",
+            }
+        ]
+
         # Test with name filter
-        await handle_find_entities(
+        result = await handle_find_entities(
             entity_type="character",
             name="Alice",
             include_full=True,
         )
 
-        # The filtering happens in utils functions which we're not mocking here
-        # So we'd need to patch those too for a complete test
+        # Should return results with proper structure
+        assert "entities" in result
+        assert "sync_info" in result
+        assert len(result["entities"]) == 1
+        assert result["entities"][0]["name"] == "Alice"
 
     @patch("mcp_kanka.tools.get_service")
     async def test_find_minimal_results(self, mock_get_service):
@@ -239,13 +277,14 @@ class TestFindEntities:
             include_full=False,
         )
 
-        assert len(result) == 2
-        assert result[0] == {
+        entities = result["entities"]
+        assert len(entities) == 2
+        assert entities[0] == {
             "entity_id": 1,
             "name": "Alice Test",
             "entity_type": "character",
         }
-        assert result[1] == {
+        assert entities[1] == {
             "entity_id": 2,
             "name": "Test Location",
             "entity_type": "location",
@@ -522,16 +561,12 @@ class TestInvalidParameters:
             "'KankaClient' object has no attribute 'dragons'"
         )
 
-        try:
-            result = await handle_find_entities(
-                entity_type="dragon",  # Invalid - should be "creature"
-                include_full=True,
-            )
-            # Should either return empty or raise a clear error
-            assert len(result) == 0 or "error" in str(result).lower()
-        except Exception as e:
-            # Should be a clear error about invalid entity type
-            assert "dragon" in str(e).lower() or "entity_type" in str(e).lower()
+        result = await handle_find_entities(
+            entity_type="dragon",  # Invalid - should be "creature"
+            include_full=True,
+        )
+        # Should return empty entities with empty sync_info
+        assert result == {"entities": [], "sync_info": {}}
 
     @patch("mcp_kanka.tools.get_service")
     async def test_create_entities_invalid_entity_type(self, mock_get_service):
@@ -585,8 +620,10 @@ class TestInvalidParameters:
             include_full=True,
         )
 
-        # Should handle gracefully - either return all or empty
-        assert isinstance(result, list)
+        # Should handle gracefully - return dict with entities
+        assert isinstance(result, dict)
+        assert "entities" in result
+        assert isinstance(result["entities"], list)
 
     @patch("mcp_kanka.tools.get_service")
     async def test_update_entities_missing_required_fields(self, mock_get_service):

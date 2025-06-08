@@ -146,7 +146,11 @@ class KankaService:
             raise
 
     def list_entities(
-        self, entity_type: EntityType, page: int = 1, limit: int = 100
+        self,
+        entity_type: EntityType,
+        page: int = 1,
+        limit: int = 100,
+        last_sync: str | None = None,
     ) -> list[Entity]:
         """
         List entities of a specific type.
@@ -155,6 +159,7 @@ class KankaService:
             entity_type: Entity type to list
             page: Page number
             limit: Results per page (0 for all)
+            last_sync: ISO 8601 timestamp to get only entities modified after this time
 
         Returns:
             List of entity objects
@@ -162,13 +167,18 @@ class KankaService:
         try:
             manager = getattr(self.client, self.API_ENDPOINT_MAP[entity_type])
 
+            # Build filters
+            filters = {}
+            if last_sync:
+                filters["lastSync"] = last_sync
+
             if limit == 0:
                 # Get all results by using a high limit
                 # The API supports up to 100 per page, so we'll need to paginate
                 all_entities = []
                 current_page = 1
                 while True:
-                    batch = manager.list(page=current_page, limit=100)
+                    batch = manager.list(page=current_page, limit=100, **filters)
                     if not batch:
                         break
                     all_entities.extend(batch)
@@ -178,7 +188,7 @@ class KankaService:
                 entities = all_entities
             else:
                 # Get paginated results
-                entities = manager.list(page=page, limit=limit)
+                entities = manager.list(page=page, limit=limit, **filters)
 
             return list(entities)
 
@@ -611,6 +621,16 @@ class KankaService:
             "type": getattr(entity, "type", None),
             "tags": [],
             "is_private": getattr(entity, "is_private", False),
+            "created_at": (
+                entity.created_at.isoformat()
+                if hasattr(entity, "created_at") and entity.created_at
+                else None
+            ),
+            "updated_at": (
+                entity.updated_at.isoformat()
+                if hasattr(entity, "updated_at") and entity.updated_at
+                else None
+            ),
         }
 
         # Convert HTML entry to Markdown

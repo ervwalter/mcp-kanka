@@ -11,7 +11,7 @@ from mcp_kanka.tools import handle_check_entity_updates, handle_find_entities
 class TestTimestampSupport:
     """Test timestamp support in entity responses."""
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_find_entities_includes_timestamps(self, mock_get_service):
         """Test that find_entities includes created_at and updated_at timestamps."""
         # Mock service
@@ -86,7 +86,7 @@ class TestTimestampSupport:
         assert entities[1]["created_at"] == "2023-02-01T12:00:00+00:00"
         assert entities[1]["updated_at"] == "2023-08-20T16:45:00+00:00"
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_sync_info_metadata(self, mock_get_service):
         """Test that sync_info metadata is correctly calculated."""
         # Mock service
@@ -142,7 +142,7 @@ class TestTimestampSupport:
         assert sync_info["total_count"] == 3
         assert sync_info["returned_count"] == 2
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_last_synced_parameter(self, mock_get_service):
         """Test that last_synced parameter is passed to the service."""
         # Mock service
@@ -166,7 +166,7 @@ class TestTimestampSupport:
 class TestCheckEntityUpdates:
     """Test the check_entity_updates functionality."""
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_check_entity_updates_basic(self, mock_get_service):
         """Test basic check_entity_updates functionality."""
         # Mock service
@@ -193,7 +193,7 @@ class TestCheckEntityUpdates:
         assert result["deleted_entity_ids"] == [104]  # Not found
         assert "check_timestamp" in result
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_check_entity_updates_no_modifications(self, mock_get_service):
         """Test check_entity_updates when no entities are modified."""
         # Mock service
@@ -218,7 +218,7 @@ class TestCheckEntityUpdates:
         assert result["deleted_entity_ids"] == []
         assert "check_timestamp" in result
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_check_entity_updates_pagination(self, mock_get_service):
         """Test that check_entity_updates handles pagination correctly."""
         # Mock service
@@ -254,7 +254,7 @@ class TestCheckEntityUpdates:
         assert set(result["modified_entity_ids"]) == {50, 125}
         assert result["deleted_entity_ids"] == [200]
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_check_entity_updates_missing_last_synced(self, mock_get_service):
         """Test that check_entity_updates requires last_synced parameter."""
         # Mock service (not actually used in this test)
@@ -267,7 +267,7 @@ class TestCheckEntityUpdates:
                 # last_synced missing
             )
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_check_entity_updates_empty_list(self, mock_get_service):
         """Test check_entity_updates with empty entity list."""
         # Mock service

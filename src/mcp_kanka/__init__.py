@@ -7,6 +7,7 @@ An MCP server that provides tools for interacting with Kanka campaigns.
 __version__ = "0.1.0"
 
 from .converter import ContentConverter
+from .operations import KankaOperations, create_operations
 from .resources import get_kanka_context
 from .service import KankaService
 from .tools import (
@@ -55,6 +56,9 @@ __all__ = [
     "__version__",
     # Converter
     "ContentConverter",
+    # Operations
+    "KankaOperations",
+    "create_operations",
     # Resources
     "get_kanka_context",
     # Service

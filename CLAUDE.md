@@ -39,12 +39,13 @@ make clean
 The MCP server follows this structure:
 
 1. **Server Entry Point** (`__main__.py`): MCP server initialization and tool registration
-2. **Tools Module** (`tools.py`): MCP tool implementations that handle parameters and call service methods
-3. **Kanka Service** (`service.py`): Business logic layer wrapping python-kanka client
-4. **Content Converter** (`converter.py`): Markdown ↔ HTML conversion with mention preservation
-5. **Types Module** (`types.py`): Type definitions for tool parameters and responses
-6. **Utils Module** (`utils.py`): Shared utilities like fuzzy matching, filtering, pagination
-7. **Resources Module** (`resources.py`): Provides the kanka://context resource
+2. **Tools Module** (`tools.py`): MCP tool implementations that handle parameters and delegate to operations
+3. **Operations Layer** (`operations.py`): High-level business logic operations, reusable by both MCP and external scripts
+4. **Kanka Service** (`service.py`): Low-level service layer wrapping python-kanka client
+5. **Content Converter** (`converter.py`): Markdown ↔ HTML conversion with mention preservation
+6. **Types Module** (`types.py`): Type definitions for tool parameters and responses
+7. **Utils Module** (`utils.py`): Shared utilities like fuzzy matching, filtering, pagination
+8. **Resources Module** (`resources.py`): Provides the kanka://context resource
 
 ## Implementation Guidelines
 
@@ -52,10 +53,13 @@ The MCP server follows this structure:
 
 Each MCP tool should:
 1. Accept parameters as defined in `kanka-mcp-tools-requirements.md`
-2. Validate input parameters
-3. Call the service layer for business logic
-4. Handle errors gracefully and return partial success where appropriate
-5. Convert content formats (Markdown ↔ HTML) as needed
+2. Delegate to the operations layer for business logic
+3. Return the operation results directly (operations handle validation and errors)
+4. Operations layer handles:
+   - Input validation
+   - Service layer calls
+   - Error handling and partial success patterns
+   - Content format conversion (Markdown ↔ HTML)
 
 ### Error Handling
 
@@ -106,6 +110,48 @@ The find_entities tool now implements comprehensive content search:
    - Test batch operation behavior
 
 3. **Test Data**: Use "Integration Test - DELETE ME" prefix for any test entities
+
+## Operations Layer Usage
+
+The operations layer provides a reusable interface for Kanka operations that can be used by both MCP tools and external scripts:
+
+### For External Scripts
+```python
+from mcp_kanka.operations import create_operations
+
+# Create operations instance
+ops = create_operations()
+
+# Use typed methods
+result = await ops.find_entities(
+    entity_type="character",
+    name="Moradin",
+    last_synced="2025-01-06T10:00:00Z"
+)
+
+# Access results
+for entity in result["entities"]:
+    print(f"Found: {entity['name']}")
+```
+
+### For MCP Tools
+MCP tools automatically use the operations layer via delegation:
+```python
+async def handle_find_entities(**params):
+    operations = get_operations()
+    return await operations.find_entities(**params)
+```
+
+### Available Operations
+- `find_entities()` - Search and filter entities
+- `create_entities()` - Create one or more entities
+- `update_entities()` - Update existing entities
+- `get_entities()` - Retrieve specific entities by ID
+- `delete_entities()` - Delete entities
+- `create_posts()` - Create posts on entities
+- `update_posts()` - Update existing posts
+- `delete_posts()` - Delete posts
+- `check_entity_updates()` - Check for modified entities since last sync
 
 ## Key Implementation Details
 

@@ -17,7 +17,7 @@ from mcp_kanka.tools import (
 class TestFindEntities:
     """Test the handle_find_entities function."""
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_find_with_search_query(self, mock_get_service):
         """Test finding entities with a search query."""
         # Mock service
@@ -94,7 +94,7 @@ class TestFindEntities:
             "character", page=1, limit=0, last_sync=None
         )
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_find_without_search_query(self, mock_get_service):
         """Test finding entities by listing when no search query."""
         # Mock service
@@ -151,8 +151,8 @@ class TestFindEntities:
             "character", page=1, limit=0, last_sync=None
         )
 
-    @patch("mcp_kanka.tools.filter_entities_by_name")
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.filter_entities_by_name")
+    @patch("mcp_kanka.operations.get_service")
     async def test_find_with_filters(self, mock_get_service, mock_filter_by_name):
         """Test finding entities with various filters."""
         # Mock service
@@ -227,7 +227,7 @@ class TestFindEntities:
         assert len(result["entities"]) == 1
         assert result["entities"][0]["name"] == "Alice"
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_find_minimal_results(self, mock_get_service):
         """Test finding entities with minimal results (include_full=False)."""
         # Mock service
@@ -294,7 +294,7 @@ class TestFindEntities:
 class TestCreateEntities:
     """Test the handle_create_entities function."""
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_create_single_entity(self, mock_get_service):
         """Test creating a single entity."""
         # Mock service
@@ -330,7 +330,7 @@ class TestCreateEntities:
         assert result[0]["mention"] == "[entity:101]"
         assert result[0]["error"] is None
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_create_multiple_entities(self, mock_get_service):
         """Test creating multiple entities with partial failures."""
         # Mock service
@@ -383,7 +383,7 @@ class TestCreateEntities:
 class TestUpdateEntities:
     """Test the handle_update_entities function."""
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_update_entities(self, mock_get_service):
         """Test updating multiple entities."""
         # Mock service
@@ -424,7 +424,7 @@ class TestUpdateEntities:
 class TestGetEntities:
     """Test the handle_get_entities function."""
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_get_entities_without_posts(self, mock_get_service):
         """Test getting entities without posts."""
         # Mock service
@@ -479,7 +479,7 @@ class TestGetEntities:
         assert result[2]["success"] is True
         assert result[2]["entity_id"] == 103
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_get_entities_with_posts(self, mock_get_service):
         """Test getting entities with posts."""
         # Mock service
@@ -514,7 +514,7 @@ class TestGetEntities:
 class TestDeleteEntities:
     """Test the handle_delete_entities function."""
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_delete_entities(self, mock_get_service):
         """Test deleting multiple entities."""
         # Mock service
@@ -548,7 +548,7 @@ class TestDeleteEntities:
 class TestInvalidParameters:
     """Test handling of invalid parameters."""
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_find_entities_invalid_entity_type(self, mock_get_service):
         """Test find_entities with invalid entity type."""
         # Mock service
@@ -568,7 +568,7 @@ class TestInvalidParameters:
         # Should return empty entities with empty sync_info
         assert result == {"entities": [], "sync_info": {}}
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_create_entities_invalid_entity_type(self, mock_get_service):
         """Test create_entities with invalid entity type."""
         # Mock service
@@ -590,7 +590,7 @@ class TestInvalidParameters:
         assert result[0]["success"] is False
         assert "error" in result[0]
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_find_entities_invalid_date_format(self, mock_get_service):
         """Test find_entities with invalid date format."""
         # Mock service
@@ -625,7 +625,7 @@ class TestInvalidParameters:
         assert "entities" in result
         assert isinstance(result["entities"], list)
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_update_entities_missing_required_fields(self, mock_get_service):
         """Test update_entities with missing required fields."""
         # Mock service
@@ -655,7 +655,7 @@ class TestInvalidParameters:
 class TestPostOperations:
     """Test post-related operations."""
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_create_posts(self, mock_get_service):
         """Test creating posts."""
         # Mock service
@@ -694,7 +694,7 @@ class TestPostOperations:
         assert result[1]["post_id"] is None
         assert result[1]["entity_id"] == 999
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_update_posts(self, mock_get_service):
         """Test updating posts."""
         # Mock service
@@ -730,7 +730,7 @@ class TestPostOperations:
         assert result[1]["success"] is False
         assert result[1]["post_id"] == 999
 
-    @patch("mcp_kanka.tools.get_service")
+    @patch("mcp_kanka.operations.get_service")
     async def test_delete_posts(self, mock_get_service):
         """Test deleting posts."""
         # Mock service

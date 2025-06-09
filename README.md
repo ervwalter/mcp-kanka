@@ -297,6 +297,33 @@ make lint
 make typecheck
 ```
 
+## Programmatic Usage
+
+In addition to being an MCP server, this package provides an operations layer that can be used directly in Python scripts:
+
+```python
+from mcp_kanka.operations import create_operations
+
+# Create operations instance
+ops = create_operations()
+
+# Find entities
+result = await ops.find_entities(
+    entity_type="character",
+    name="Moradin"
+)
+
+# Create an entity
+results = await ops.create_entities([{
+    "entity_type": "character",
+    "name": "New Character",
+    "type": "NPC",
+    "entry": "A mysterious figure"
+}])
+```
+
+This makes it easy to build sync scripts, bulk operations, or other tools that interact with Kanka.
+
 ## Configuration
 
 The MCP server requires:

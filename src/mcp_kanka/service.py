@@ -697,3 +697,15 @@ class KankaService:
             result["entry"] = None
 
         return result
+
+
+# Global service instance (initialized on first use)
+_service: KankaService | None = None
+
+
+def get_service() -> KankaService:
+    """Get or create the Kanka service instance."""
+    global _service
+    if _service is None:
+        _service = KankaService()
+    return _service

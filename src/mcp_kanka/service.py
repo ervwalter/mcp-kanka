@@ -216,25 +216,8 @@ class KankaService:
             Entity data with converted content
         """
         try:
-            # Get all recent entities since we can't filter by ID directly
-            page = 1
-            found_entity = None
-
-            # Search through recent entities
-            while page <= 10 and not found_entity:  # Check up to 10 pages
-                batch = self.client.entities(page=page, limit=100)
-                if not batch:
-                    break
-
-                for e in batch:
-                    # The 'id' field in entities response is the entity_id
-                    if e.get("id") == entity_id:
-                        found_entity = e
-                        break
-
-                if len(batch) < 100:
-                    break
-                page += 1
+            # Use the direct entity endpoint
+            found_entity = self.client.entity(entity_id)
 
             if not found_entity:
                 # Entity not found
@@ -264,21 +247,29 @@ class KankaService:
             else:
                 return None
 
-            # Get the type-specific ID from child_id
-            type_id = found_entity.get("child_id")
+            # The entity endpoint returns the data in 'child' field
+            child_data = found_entity.get("child")
+            if not child_data:
+                return None
+
+            # Get the type-specific ID
+            type_id = child_data.get("id")
             if not type_id:
                 return None
 
-            # Now get the full entity using the type-specific manager
+            # Now use the type-specific manager to get a proper entity object
+            # This gives us consistent data format with datetime objects
             manager = getattr(self.client, self.API_ENDPOINT_MAP[our_type])
             entity = manager.get(type_id)
 
-            # Convert to our format
+            # Use _entity_to_dict to handle all conversions consistently
             result = self._entity_to_dict(entity, our_type)
 
             # Get posts if requested
             if include_posts:
                 try:
+                    # Get the manager for this entity type
+                    manager = getattr(self.client, self.API_ENDPOINT_MAP[our_type])
                     # Use entity_id, not the type-specific id
                     posts = manager.list_posts(entity_id, limit=100)
                     result["posts"] = [self._post_to_dict(post) for post in posts]
@@ -299,7 +290,7 @@ class KankaService:
         type: str | None = None,
         entry: str | None = None,
         tags: list[str] | None = None,
-        is_private: bool | None = None,
+        is_hidden: bool | None = None,
     ) -> dict[str, Any]:
         """
         Create a new entity.
@@ -310,7 +301,7 @@ class KankaService:
             type: Entity subtype
             entry: Description in Markdown
             tags: List of tag names
-            is_private: Privacy setting
+            is_hidden: Whether entity should be hidden from players (admin-only)
 
         Returns:
             Created entity data
@@ -328,11 +319,16 @@ class KankaService:
                 # Convert markdown to HTML
                 data["entry"] = self.converter.markdown_to_html(entry)
 
-            if is_private is not None:
-                data["is_private"] = is_private
+            # Set privacy based on is_hidden
+            # For entities, use is_private (not visibility_id)
+            if is_hidden is not None:
+                data["is_private"] = is_hidden
             elif entity_type == "note":
                 # Notes default to private
                 data["is_private"] = True
+            else:
+                # Default to public
+                data["is_private"] = False
 
             # Handle tags
             if tags:
@@ -345,6 +341,11 @@ class KankaService:
             # Convert to our format
             result = self._entity_to_dict(entity, entity_type)
             result["mention"] = f"[entity:{entity.entity_id}]"
+
+            # If we explicitly set privacy, ensure it's reflected in the result
+            # The API might not return is_private in the create response
+            if "is_private" in data:
+                result["is_hidden"] = data["is_private"]
 
             return result
 
@@ -359,7 +360,7 @@ class KankaService:
         type: str | None = None,
         entry: str | None = None,
         tags: list[str] | None = None,
-        is_private: bool | None = None,
+        is_hidden: bool | None = None,
     ) -> bool:
         """
         Update an existing entity.
@@ -370,7 +371,7 @@ class KankaService:
             type: Entity subtype
             entry: Description in Markdown
             tags: List of tag names
-            is_private: Privacy setting
+            is_hidden: Whether entity should be hidden from players (admin-only)
 
         Returns:
             True if successful
@@ -394,8 +395,10 @@ class KankaService:
                 # Convert markdown to HTML
                 data["entry"] = self.converter.markdown_to_html(entry)
 
-            if is_private is not None:
-                data["is_private"] = is_private
+            # Handle privacy
+            # For entities, use is_private (not visibility_id)
+            if is_hidden is not None:
+                data["is_private"] = is_hidden
 
             # Handle tags
             if tags is not None:
@@ -442,7 +445,7 @@ class KankaService:
         entity_id: int,
         name: str,
         entry: str | None = None,
-        is_private: bool = False,
+        is_hidden: bool = False,
     ) -> dict[str, Any]:
         """
         Create a post on an entity.
@@ -451,7 +454,7 @@ class KankaService:
             entity_id: Entity ID
             name: Post title
             entry: Post content in Markdown
-            is_private: Privacy setting
+            is_hidden: Whether post should be hidden from players (admin-only)
 
         Returns:
             Created post data
@@ -466,7 +469,15 @@ class KankaService:
             manager = getattr(self.client, self.API_ENDPOINT_MAP[entity_type])
 
             # Prepare post data
-            data: dict[str, Any] = {"name": name, "is_private": is_private}
+            data: dict[str, Any] = {"name": name}
+
+            # Set visibility based on is_hidden
+            if is_hidden:
+                # visibility_id 2 = admin only
+                data["visibility_id"] = 2
+            else:
+                # visibility_id 1 = all (default)
+                data["visibility_id"] = 1
 
             if entry:
                 data["entry"] = self.converter.markdown_to_html(entry)
@@ -489,7 +500,7 @@ class KankaService:
         post_id: int,
         name: str,
         entry: str | None = None,
-        is_private: bool | None = None,
+        is_hidden: bool | None = None,
     ) -> bool:
         """
         Update a post.
@@ -499,7 +510,7 @@ class KankaService:
             post_id: Post ID
             name: Post title (required by API)
             entry: Post content in Markdown
-            is_private: Privacy setting
+            is_hidden: Whether post should be hidden from players (admin-only)
 
         Returns:
             True if successful
@@ -519,8 +530,10 @@ class KankaService:
             if entry is not None:
                 data["entry"] = self.converter.markdown_to_html(entry)
 
-            if is_private is not None:
-                data["is_private"] = int(is_private)
+            # Handle visibility
+            # For posts, use visibility_id
+            if is_hidden is not None:
+                data["visibility_id"] = 2 if is_hidden else 1
 
             # Update post - use entity_id, not the type-specific id
             manager.update_post(entity_id, post_id, **data)
@@ -608,6 +621,58 @@ class KankaService:
         except Exception as e:
             logger.warning(f"Failed to load tag cache: {e}")
 
+    def _resolve_tag_names(self, raw_tags: list[Any]) -> list[str]:
+        """
+        Resolve tag IDs to tag names.
+
+        Args:
+            raw_tags: List of tag IDs or tag objects
+
+        Returns:
+            List of tag names
+        """
+        if not raw_tags or not isinstance(raw_tags, list):
+            return []
+
+        # Ensure tag cache is loaded
+        if not self._tag_cache:
+            self._load_tag_cache()
+
+        tag_names = []
+        for tag_item in raw_tags:
+            if isinstance(tag_item, int | str):
+                # It's a tag ID, need to look it up
+                tag_id = int(tag_item) if isinstance(tag_item, str) else tag_item
+
+                # Check cache first
+                tag_name = None
+                for _cached_name, cached_tag in self._tag_cache.items():
+                    if cached_tag.id == tag_id:
+                        tag_name = cached_tag.name
+                        break
+
+                if tag_name:
+                    tag_names.append(tag_name)
+                else:
+                    # Not in cache, try to fetch it
+                    try:
+                        tag = self.client.tags.get(tag_id)
+                        tag_names.append(tag.name)
+                        # Add to cache for future lookups
+                        self._tag_cache[tag.name.lower()] = tag
+                    except Exception as e:
+                        logger.warning(f"Failed to resolve tag ID {tag_id}: {e}")
+                        # If we can't resolve it, keep the ID as string
+                        tag_names.append(str(tag_id))
+            elif hasattr(tag_item, "name"):
+                # It's a tag object
+                tag_names.append(tag_item.name)
+            else:
+                # Unknown format, keep as string
+                tag_names.append(str(tag_item))
+
+        return tag_names
+
     def _entity_to_dict(self, entity: Entity, entity_type: str) -> dict[str, Any]:
         """
         Convert entity object to dictionary.
@@ -626,7 +691,6 @@ class KankaService:
             "entity_type": entity_type,
             "type": getattr(entity, "type", None),
             "tags": [],
-            "is_private": getattr(entity, "is_private", False),
             "created_at": (
                 entity.created_at.isoformat()
                 if hasattr(entity, "created_at") and entity.created_at
@@ -639,44 +703,24 @@ class KankaService:
             ),
         }
 
+        # Handle visibility - translate is_private to is_hidden
+        # Entities use is_private field
+        is_private = getattr(entity, "is_private", None)
+        if is_private is not None:
+            result["is_hidden"] = is_private
+        else:
+            # Default to visible if no is_private field
+            result["is_hidden"] = False
+
         # Convert HTML entry to Markdown
         if hasattr(entity, "entry") and entity.entry:
             result["entry"] = self.converter.html_to_markdown(entity.entry)
         else:
             result["entry"] = None
 
-        # Extract tag names
-        if hasattr(entity, "tags") and entity.tags and isinstance(entity.tags, list):
-            # Tags are returned as IDs, we need to resolve them to names
-            tag_names = []
-            for tag_item in entity.tags:
-                if isinstance(tag_item, int | str):
-                    # It's a tag ID, need to look it up
-                    tag_id = int(tag_item) if isinstance(tag_item, str) else tag_item
-                    # Check cache first
-                    tag_name = None
-                    for _, cached_tag in self._tag_cache.items():
-                        if cached_tag.id == tag_id:
-                            tag_name = cached_tag.name
-                            break
-                    if tag_name:
-                        tag_names.append(tag_name)
-                    else:
-                        # Not in cache, need to fetch
-                        try:
-                            tag = self.client.tags.get(tag_id)
-                            tag_names.append(tag.name)
-                            self._tag_cache[tag.name.lower()] = tag
-                        except Exception:
-                            # If we can't resolve it, keep the ID as string
-                            tag_names.append(str(tag_item))
-                elif hasattr(tag_item, "name"):
-                    # It's a tag object
-                    tag_names.append(tag_item.name)
-                else:
-                    # Unknown format
-                    tag_names.append(str(tag_item))
-            result["tags"] = tag_names
+        # Extract tag names using helper method
+        if hasattr(entity, "tags"):
+            result["tags"] = self._resolve_tag_names(entity.tags)
 
         # Handle posts if present (when related=True)
         if hasattr(entity, "posts") and entity.posts is not None:
@@ -697,8 +741,17 @@ class KankaService:
         result = {
             "id": post.id,
             "name": post.name,
-            "is_private": getattr(post, "is_private", False),
         }
+
+        # Handle visibility - translate visibility_id to is_hidden
+        # Posts use visibility_id field
+        visibility_id = getattr(post, "visibility_id", None)
+        if visibility_id is not None:
+            # visibility_id 2 = admin only (hidden from players)
+            result["is_hidden"] = visibility_id == 2
+        else:
+            # Default to visible if no visibility_id
+            result["is_hidden"] = False
 
         # Convert HTML entry to Markdown
         if hasattr(post, "entry") and post.entry:

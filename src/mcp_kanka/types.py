@@ -48,7 +48,7 @@ class EntityInput(TypedDict):
     type: str | None
     entry: str | None
     tags: list[str] | None
-    is_private: bool | None
+    is_hidden: bool | None
 
 
 class CreateEntitiesParams(TypedDict):
@@ -65,7 +65,7 @@ class EntityUpdate(TypedDict):
     type: str | None
     entry: str | None
     tags: list[str] | None
-    is_private: bool | None
+    is_hidden: bool | None
 
 
 class UpdateEntitiesParams(TypedDict):
@@ -93,7 +93,7 @@ class PostInput(TypedDict):
     entity_id: int
     name: str
     entry: str | None
-    is_private: bool | None
+    is_hidden: bool | None
 
 
 class CreatePostsParams(TypedDict):
@@ -109,7 +109,7 @@ class PostUpdate(TypedDict):
     post_id: int
     name: str
     entry: str | None
-    is_private: bool | None
+    is_hidden: bool | None
 
 
 class UpdatePostsParams(TypedDict):
@@ -150,7 +150,7 @@ class EntityFull(TypedDict, total=False):
     type: str | None
     entry: str | None
     tags: list[str]
-    is_private: bool
+    is_hidden: bool
     created_at: str  # ISO 8601 timestamp
     updated_at: str  # ISO 8601 timestamp
     match_score: float | None  # Only when name_fuzzy=true
@@ -162,7 +162,7 @@ class PostData(TypedDict):
     id: int
     name: str
     entry: str | None
-    is_private: bool
+    is_hidden: bool
 
 
 class EntityWithPosts(EntityFull):
@@ -217,7 +217,7 @@ class GetEntityResult(TypedDict, total=False):
     type: str | None
     entry: str | None
     tags: list[str] | None
-    is_private: bool | None
+    is_hidden: bool | None
     created_at: str | None  # ISO 8601 timestamp
     updated_at: str | None  # ISO 8601 timestamp
     posts: list[PostData] | None
@@ -268,7 +268,7 @@ class KankaContextFields(TypedDict):
     type: str
     entry: str
     tags: str
-    is_private: str
+    is_hidden: str  # This stores the description of the is_hidden field
 
 
 class KankaContextTerminology(TypedDict):

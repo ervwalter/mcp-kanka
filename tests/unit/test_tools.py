@@ -42,7 +42,7 @@ class TestFindEntities:
                 "type": "NPC",
                 "entry": "A brave warrior test",
                 "tags": ["hero"],
-                "is_private": False,
+                "is_hidden": False,
                 "created_at": "2023-01-01T10:00:00Z",
                 "updated_at": "2023-01-01T10:00:00Z",
             },
@@ -54,7 +54,7 @@ class TestFindEntities:
                 "type": "Player",
                 "entry": "A cunning rogue",
                 "tags": ["rogue"],
-                "is_private": False,
+                "is_hidden": False,
                 "created_at": "2023-01-01T10:00:00Z",
                 "updated_at": "2023-01-01T10:00:00Z",
             },
@@ -66,7 +66,7 @@ class TestFindEntities:
                 "type": "NPC",
                 "entry": "Another character",
                 "tags": [],
-                "is_private": False,
+                "is_hidden": False,
                 "created_at": "2023-01-01T10:00:00Z",
                 "updated_at": "2023-01-01T10:00:00Z",
             },
@@ -117,7 +117,7 @@ class TestFindEntities:
                 "entity_type": "character",
                 "type": "NPC",
                 "tags": [],
-                "is_private": False,
+                "is_hidden": False,
                 "entry": None,
                 "created_at": "2023-01-01T10:00:00Z",
                 "updated_at": "2023-01-01T10:00:00Z",
@@ -129,7 +129,7 @@ class TestFindEntities:
                 "entity_type": "character",
                 "type": "Player",
                 "tags": [],
-                "is_private": False,
+                "is_hidden": False,
                 "entry": None,
                 "created_at": "2023-01-01T10:00:00Z",
                 "updated_at": "2023-01-01T10:00:00Z",
@@ -168,7 +168,7 @@ class TestFindEntities:
             "entity_type": t,
             "type": e.type,
             "tags": e.tags,
-            "is_private": False,
+            "is_hidden": False,
             "entry": e.entry,
         }
 
@@ -209,7 +209,7 @@ class TestFindEntities:
                 "entity_type": "character",
                 "type": "NPC",
                 "tags": ["hero", "warrior"],
-                "is_private": False,
+                "is_hidden": False,
                 "entry": "Brave",
             }
         ]
@@ -318,7 +318,7 @@ class TestCreateEntities:
                     "type": "NPC",
                     "entry": "A test character",
                     "tags": ["test"],
-                    "is_private": False,
+                    "is_hidden": False,
                 }
             ]
         )
@@ -441,7 +441,7 @@ class TestGetEntities:
                 "type": "NPC",
                 "entry": "Description",
                 "tags": ["hero"],
-                "is_private": False,
+                "is_hidden": False,
             },
             None,  # Not found
             {
@@ -452,7 +452,7 @@ class TestGetEntities:
                 "type": "Dungeon",
                 "entry": None,
                 "tags": [],
-                "is_private": True,
+                "is_hidden": True,
             },
         ]
 
@@ -675,7 +675,7 @@ class TestPostOperations:
                     "entity_id": 101,
                     "name": "Test Post",
                     "entry": "Post content",
-                    "is_private": False,
+                    "is_hidden": False,
                 },
                 {
                     "entity_id": 999,

@@ -362,7 +362,7 @@ class KankaOperations:
                     type=entity_input.get("type"),
                     entry=entity_input.get("entry"),
                     tags=entity_input.get("tags"),
-                    is_private=entity_input.get("is_private"),
+                    is_hidden=entity_input.get("is_hidden"),
                 )
 
                 result: CreateEntityResult = {
@@ -434,7 +434,7 @@ class KankaOperations:
                     type=update.get("type"),
                     entry=update.get("entry"),
                     tags=update.get("tags"),
-                    is_private=update.get("is_private"),
+                    is_hidden=update.get("is_hidden"),
                 )
 
                 result: UpdateEntityResult = {
@@ -482,7 +482,7 @@ class KankaOperations:
                         "type": entity.get("type"),
                         "entry": entity.get("entry"),
                         "tags": entity.get("tags", []),
-                        "is_private": entity.get("is_private", False),
+                        "is_hidden": entity.get("is_hidden", False),
                         "created_at": entity.get("created_at"),
                         "updated_at": entity.get("updated_at"),
                         "success": True,
@@ -562,7 +562,7 @@ class KankaOperations:
                     entity_id=post_input["entity_id"],
                     name=post_input["name"],
                     entry=post_input.get("entry"),
-                    is_private=post_input.get("is_private", False),
+                    is_hidden=post_input.get("is_hidden", False),
                 )
 
                 result: CreatePostResult = {
@@ -607,7 +607,7 @@ class KankaOperations:
                     post_id=update["post_id"],
                     name=update["name"],
                     entry=update.get("entry"),
-                    is_private=update.get("is_private"),
+                    is_hidden=update.get("is_hidden"),
                 )
 
                 result: UpdatePostResult = {

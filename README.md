@@ -121,7 +121,7 @@ Create one or more entities with markdown content.
   - `entry` (optional): Description in Markdown format
   - `type` (optional): User-defined Type field (e.g., 'NPC', 'Player Character')
   - `tags` (optional): Array of tag names
-  - `is_private` (optional): If true, only campaign admins can see
+  - `is_hidden` (optional): If true, hidden from players (admin-only)
 
 **Returns:** Array of created entities with their IDs and timestamps
 
@@ -135,7 +135,7 @@ Update one or more existing entities.
   - `entry` (optional): Updated content in Markdown format
   - `type` (optional): Updated Type field
   - `tags` (optional): Updated array of tags
-  - `is_private` (optional): Updated privacy setting
+  - `is_hidden` (optional): If true, hidden from players (admin-only)
 
 **Returns:** Array of results with success/error status for each update
 
@@ -182,7 +182,7 @@ Add posts (notes) to entities.
   - `entity_id` (required): Entity to attach post to
   - `name` (required): Post title
   - `entry` (optional): Post content in Markdown format
-  - `is_private` (optional): Privacy setting
+  - `is_hidden` (optional): If true, hidden from players (admin-only)
 
 **Returns:** Array of created posts with their IDs
 
@@ -195,7 +195,7 @@ Modify existing posts.
   - `post_id` (required): The post ID to update
   - `name` (required): Post title (required by API even if unchanged)
   - `entry` (optional): Updated content in Markdown format
-  - `is_private` (optional): Updated privacy setting
+  - `is_hidden` (optional): If true, hidden from players (admin-only)
 
 **Returns:** Array of results with success/error status for each update
 

@@ -118,14 +118,14 @@ class TestKankaService:
         mock_entity1.entity_id = 101
         mock_entity1.name = "Alice"
         mock_entity1.type = "NPC"
-        mock_entity1.is_private = False
+        mock_entity1.visibility_id = 1  # Visible
 
         mock_entity2 = Mock()
         mock_entity2.id = 2
         mock_entity2.entity_id = 102
         mock_entity2.name = "Bob"
         mock_entity2.type = "Player"
-        mock_entity2.is_private = True
+        mock_entity2.visibility_id = 2  # Hidden
 
         mock_entities = [mock_entity1, mock_entity2]
         self.mock_client.characters.list.return_value = mock_entities
@@ -169,7 +169,7 @@ class TestKankaService:
         mock_entity.entity_id = 101
         mock_entity.name = "Test Character"
         mock_entity.type = "NPC"
-        mock_entity.is_private = False
+        mock_entity.is_private = False  # Public
         mock_entity.tags = []
         mock_entity.entry = "<p>Test description</p>"
         mock_entity.created_at = datetime.now()
@@ -305,7 +305,7 @@ class TestKankaService:
 
         # Test create post
         result = self.service.create_post(
-            entity_id=101, name="Test Post", entry="Post content", is_private=True
+            entity_id=101, name="Test Post", entry="Post content", is_hidden=True
         )
 
         assert result["post_id"] == 50
@@ -316,7 +316,7 @@ class TestKankaService:
         call_args = self.mock_client.characters.create_post.call_args
         assert call_args[0] == (101,)  # Entity ID
         assert call_args[1]["name"] == "Test Post"
-        assert call_args[1]["is_private"] == 1  # Converted to int
+        assert call_args[1]["visibility_id"] == 2  # Admin visibility
 
     def test_update_post(self):
         """Test updating a post."""
@@ -354,7 +354,7 @@ class TestKankaService:
         mock_entity.entity_id = 101
         mock_entity.name = "Test Entity"
         mock_entity.type = "NPC"
-        mock_entity.is_private = True
+        mock_entity.is_private = True  # Private entity (hidden)
 
         # Mock tags
         tag1 = Mock()
@@ -379,7 +379,7 @@ class TestKankaService:
         assert result["name"] == "Test Entity"
         assert result["entity_type"] == "character"
         assert result["type"] == "NPC"
-        assert result["is_private"] is True
+        assert result["is_hidden"] is True
         assert "HTML content" in result["entry"]  # Should be converted to markdown
 
     def test_get_or_create_tags(self):
@@ -416,7 +416,7 @@ class TestKankaService:
         mock_entity.entity_id = 101
         mock_entity.name = "Test Entity"
         mock_entity.type = "NPC"
-        mock_entity.is_private = False
+        mock_entity.is_private = False  # Public
         mock_entity.tags = []
         mock_entity.entry = None
         mock_entity.created_at = datetime(2023, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
@@ -442,7 +442,7 @@ class TestKankaService:
         mock_entity.entity_id = 101
         mock_entity.name = "Test Entity"
         mock_entity.type = "NPC"
-        mock_entity.is_private = False
+        mock_entity.is_private = False  # Public
         mock_entity.tags = []
         mock_entity.entry = None
         # No created_at or updated_at attributes

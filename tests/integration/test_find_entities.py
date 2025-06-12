@@ -289,7 +289,7 @@ class TestFindEntities(IntegrationTestBase):
                 {
                     "entity_type": "note",
                     "name": f"Integration Test Note {i:02d} - DELETE ME",
-                    "is_private": True,
+                    "is_hidden": True,
                 }
             )
 

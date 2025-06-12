@@ -29,7 +29,7 @@ def get_kanka_context() -> str:
             "type": "Optional. Subtype like 'NPC', 'City', 'Guild' (user-defined)",
             "entry": "Optional. Main description in Markdown format",
             "tags": "Optional. String array for categorization",
-            "is_private": "Optional. If true, only campaign admins can see",
+            "is_hidden": "Optional. If true, hidden from players (admin-only)",
         },
         "terminology": {
             "entity_type": "The main category (character, location, etc.) - fixed list",

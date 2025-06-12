@@ -64,7 +64,7 @@ class TestGetKankaContext:
         assert isinstance(fields, dict)
 
         # Check expected fields
-        expected_fields = ["name", "type", "entry", "tags", "is_private"]
+        expected_fields = ["name", "type", "entry", "tags", "is_hidden"]
         for field in expected_fields:
             assert field in fields
             assert isinstance(fields[field], str)  # Should have description

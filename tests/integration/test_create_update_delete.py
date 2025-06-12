@@ -22,7 +22,7 @@ class TestCreateUpdateDelete(IntegrationTestBase):
                     "type": "Player Character",
                     "entry": "# Background\n\nA brave **hero** from the integration tests.\n\nHas connections to [entity:123|The King].",
                     "tags": ["hero", "test", "player"],
-                    "is_private": False,
+                    "is_hidden": False,
                 }
             ],
         )
@@ -50,7 +50,7 @@ class TestCreateUpdateDelete(IntegrationTestBase):
         self.assert_in("[entity:123|The King]", entity["entry"])  # Mention preserved
         self.assert_in("hero", entity["tags"])
         self.assert_in("test", entity["tags"])
-        self.assert_equal(entity["is_private"], False)
+        self.assert_equal(entity["is_hidden"], False)
 
     async def test_create_multiple_entities(self):
         """Test creating multiple entities in one call."""
@@ -74,7 +74,7 @@ class TestCreateUpdateDelete(IntegrationTestBase):
                     "entity_type": "quest",
                     "name": "Integration Test Quest - DELETE ME",
                     "type": "Main Quest",
-                    "is_private": True,
+                    "is_hidden": True,
                 },
             ],
         )
@@ -104,7 +104,7 @@ class TestCreateUpdateDelete(IntegrationTestBase):
                     "type": "NPC",
                     "entry": "Original description",
                     "tags": ["original"],
-                    "is_private": False,
+                    "is_hidden": False,
                 }
             ],
         )
@@ -125,7 +125,7 @@ class TestCreateUpdateDelete(IntegrationTestBase):
                     "type": "Boss NPC",
                     "entry": "# Updated Description\n\nThis character has been **updated**!",
                     "tags": ["updated", "boss"],
-                    "is_private": True,
+                    "is_hidden": True,
                 }
             ],
         )
@@ -147,7 +147,7 @@ class TestCreateUpdateDelete(IntegrationTestBase):
         self.assert_in("Updated Description", entity["entry"])
         self.assert_in("updated", entity["tags"])
         self.assert_in("boss", entity["tags"])
-        self.assert_equal(entity["is_private"], True)
+        self.assert_equal(entity["is_hidden"], True)
 
     async def test_partial_update(self):
         """Test updating only some fields of an entity."""
@@ -205,7 +205,7 @@ class TestCreateUpdateDelete(IntegrationTestBase):
                     "entity_type": "note",
                     "name": "Integration Test Delete Me - DELETE ME",
                     "entry": "This will be deleted",
-                    "is_private": True,
+                    "is_hidden": True,
                 }
             ],
         )

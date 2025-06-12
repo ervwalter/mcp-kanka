@@ -2,7 +2,7 @@
 
 import re
 
-import markdown
+import mistune
 from markdownify import markdownify as md
 
 
@@ -17,15 +17,10 @@ class ContentConverter:
     PLACEHOLDER_PATTERN = re.compile(r"KANKAMENTIONPLACEHOLDER(\d+)")
 
     def __init__(self) -> None:
-        """Initialize the converter with markdown extensions."""
-        self.md = markdown.Markdown(
-            extensions=[
-                "markdown.extensions.nl2br",  # Convert newlines to <br>
-                "markdown.extensions.fenced_code",  # Support for code blocks
-                "markdown.extensions.tables",  # Support for tables
-                "markdown.extensions.sane_lists",  # Better list handling
-            ]
-        )
+        """Initialize the converter with mistune renderer."""
+        # Use mistune for more tolerant markdown parsing
+        # It handles 2-space indented nested lists correctly
+        self.md = mistune.create_markdown(renderer="html")
 
     def markdown_to_html(self, content: str) -> str:
         """
@@ -44,13 +39,15 @@ class ContentConverter:
         protected_content, mentions = self._protect_mentions(content)
 
         # Convert to HTML
-        html = self.md.convert(protected_content)
+        html = self.md(protected_content)
+
+        # Ensure html is a string
+        if not isinstance(html, str):
+            # If mistune returns something else, convert it
+            html = str(html)
 
         # Restore mentions
         html = self._restore_mentions(html, mentions)
-
-        # Reset markdown instance for next use
-        self.md.reset()
 
         return html
 

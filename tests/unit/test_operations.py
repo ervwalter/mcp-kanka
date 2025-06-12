@@ -72,7 +72,7 @@ class TestFindEntities:
             "type": "NPC",
             "entry": "Test content with search term",
             "tags": [],
-            "is_private": False,
+            "is_hidden": False,
             "created_at": "2023-01-01T00:00:00Z",
             "updated_at": "2023-01-01T00:00:00Z",
         }
@@ -292,7 +292,7 @@ class TestGetEntities:
             "type": "NPC",
             "entry": "Description",
             "tags": ["test"],
-            "is_private": False,
+            "is_hidden": False,
         }
 
         ops = KankaOperations(service=mock_service)

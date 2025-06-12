@@ -38,7 +38,7 @@ class TestPosts(IntegrationTestBase):
                     "entity_id": entity_id,
                     "name": "Background Story",
                     "entry": "# Early Life\n\nBorn in a small **village**, this character had humble beginnings.\n\nThey met [entity:123|The Mentor] who changed their life.",
-                    "is_private": False,
+                    "is_hidden": False,
                 }
             ],
         )
@@ -112,13 +112,13 @@ class TestPosts(IntegrationTestBase):
                     "entity_id": entity1_id,
                     "name": "Castle History",
                     "entry": "Built 500 years ago...",
-                    "is_private": True,
+                    "is_hidden": True,
                 },
                 {
                     "entity_id": entity2_id,
                     "name": "Quest Objectives",
                     "entry": "1. Find the artifact\n2. Defeat the boss",
-                    "is_private": False,
+                    "is_hidden": False,
                 },
             ],
         )
@@ -150,7 +150,7 @@ class TestPosts(IntegrationTestBase):
                     "entity_id": entity_id,
                     "name": "Day 1",
                     "entry": "Started the journey...",
-                    "is_private": False,
+                    "is_hidden": False,
                 }
             ],
         )
@@ -168,7 +168,7 @@ class TestPosts(IntegrationTestBase):
                     "post_id": post_id,
                     "name": "Day 1 - Updated",
                     "entry": "# Journey Begins\n\nStarted the journey with **great excitement**!",
-                    "is_private": True,
+                    "is_hidden": True,
                 }
             ],
         )
@@ -188,7 +188,7 @@ class TestPosts(IntegrationTestBase):
         self.assert_equal(updated_post["name"], "Day 1 - Updated")
         self.assert_in("Journey Begins", updated_post["entry"])
         self.assert_in("**great excitement**", updated_post["entry"])
-        self.assert_equal(updated_post["is_private"], True)
+        self.assert_equal(updated_post["is_hidden"], True)
 
     async def test_delete_post(self):
         """Test deleting a post."""
@@ -320,7 +320,7 @@ class TestPosts(IntegrationTestBase):
                 {
                     "entity_type": "note",
                     "name": "Integration Test Secret Note - DELETE ME",
-                    "is_private": True,
+                    "is_hidden": True,
                 }
             ],
         )
@@ -336,13 +336,13 @@ class TestPosts(IntegrationTestBase):
                     "entity_id": entity_id,
                     "name": "Public Information",
                     "entry": "This can be seen by players",
-                    "is_private": False,
+                    "is_hidden": False,
                 },
                 {
                     "entity_id": entity_id,
                     "name": "Secret Information",
                     "entry": "This is for GMs only",
-                    "is_private": True,
+                    "is_hidden": True,
                 },
             ],
         )
@@ -358,15 +358,15 @@ class TestPosts(IntegrationTestBase):
         )
 
         entity = get_result[0]
-        self.assert_true(entity["is_private"], "Entity should be private")
+        self.assert_true(entity["is_hidden"], "Entity should be private")
         self.assert_equal(len(entity["posts"]), 2, "Should have both posts")
 
         # Check privacy settings
         for post in entity["posts"]:
             if post["name"] == "Public Information":
-                self.assert_false(post["is_private"])
+                self.assert_false(post["is_hidden"])
             elif post["name"] == "Secret Information":
-                self.assert_true(post["is_private"])
+                self.assert_true(post["is_hidden"])
 
     def assert_false(self, condition: bool, message: str = ""):
         """Assert that a condition is false."""

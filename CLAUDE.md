@@ -178,18 +178,24 @@ async def handle_find_entities(**params):
 
 ## Code Quality Workflow
 
-**IMPORTANT**: After making any significant code changes, always run:
+**IMPORTANT**: After making any significant code changes, ALWAYS run these commands in order:
 
-1. **Format first**: `make format` - Runs black and isort to format code
-2. **Verify quality**: `make check` - Runs full linting, type checking, and all tests
+1. **Format first**: `make format` - Runs black, isort, and ruff auto-fixes
+2. **Then check**: `make check` - Runs full linting, type checking, and all tests
 
-This ensures:
+**Why this order matters**:
+- `make format` automatically fixes many style issues that would cause `make check` to fail
+- Running `make check` without formatting first often results in unnecessary failures
+- This saves time and ensures consistent code style
+
+This workflow ensures:
 - Code is properly formatted (black/isort)
-- No linting violations (ruff)
+- Auto-fixable issues are resolved (ruff --fix)
+- No remaining linting violations (ruff)
 - Type checking passes (mypy)
 - All tests pass (pytest)
 
-**Never commit without running `make check` successfully**.
+**Never commit without running both `make format` and `make check` successfully**.
 
 ## MCP-Specific Considerations
 
@@ -284,4 +290,30 @@ result = await self.create_entity(
 - Never log or expose API tokens
 - Validate all input parameters
 - Sanitize error messages before returning to clients
-- Use is_private flag appropriately for sensitive content
+
+## CRITICAL RULES
+
+### Visibility Handling Strategy
+
+**RULE**: The MCP server presents a unified `is_hidden` boolean interface to LLMs, but internally uses different fields based on the Kanka API endpoint:
+
+1. **For Entities** (characters, locations, etc.):
+   - Use `is_private` field when communicating with Kanka API
+   - Convert between `is_private` and `is_hidden` in the service layer
+   - The `is_private` field should ONLY appear in the service layer (`service.py`)
+
+2. **For Posts**:
+   - Use `visibility_id` field when communicating with Kanka API
+   - Convert between `visibility_id` (1=all, 2=admin) and `is_hidden` in the service layer
+
+3. **For MCP Tools and Operations Layer**:
+   - ALWAYS use `is_hidden` boolean in tool interfaces and operations
+   - NEVER expose `is_private` or `visibility_id` to LLMs or in MCP tool responses
+   - The operations layer should only deal with `is_hidden`
+
+**Implementation Notes**:
+- The service layer (`service.py`) handles all conversions between API fields and the unified `is_hidden` interface
+- Tests should use `is_hidden` in their assertions and tool calls
+- The term `is_private` should NEVER appear outside of `service.py`
+
+**Reason**: The Kanka API inconsistently uses different fields for visibility across endpoints. We provide a consistent interface to LLMs while handling the API complexity internally.

@@ -183,9 +183,9 @@ async def list_tools() -> list[types.Tool]:
                                     "description": "Description in Markdown format",
                                 },
                                 "tags": {"type": "array", "items": {"type": "string"}},
-                                "is_private": {
+                                "is_hidden": {
                                     "type": "boolean",
-                                    "description": "If true, only campaign admins can see",
+                                    "description": "If true, hidden from players (admin-only)",
                                 },
                             },
                             "required": ["entity_type", "name"],
@@ -223,7 +223,7 @@ async def list_tools() -> list[types.Tool]:
                                     "description": "Content in Markdown format",
                                 },
                                 "tags": {"type": "array", "items": {"type": "string"}},
-                                "is_private": {"type": "boolean"},
+                                "is_hidden": {"type": "boolean"},
                             },
                             "required": ["entity_id", "name"],
                         },
@@ -287,9 +287,9 @@ async def list_tools() -> list[types.Tool]:
                                     "type": "string",
                                     "description": "Post content in Markdown format",
                                 },
-                                "is_private": {
+                                "is_hidden": {
                                     "type": "boolean",
-                                    "description": "Privacy setting",
+                                    "description": "If true, hidden from players (admin-only)",
                                 },
                             },
                             "required": ["entity_id", "name"],
@@ -326,9 +326,9 @@ async def list_tools() -> list[types.Tool]:
                                     "type": "string",
                                     "description": "Post content in Markdown format",
                                 },
-                                "is_private": {
+                                "is_hidden": {
                                     "type": "boolean",
-                                    "description": "Privacy setting",
+                                    "description": "If true, hidden from players (admin-only)",
                                 },
                             },
                             "required": ["entity_id", "post_id", "name"],

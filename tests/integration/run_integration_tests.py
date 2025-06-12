@@ -13,6 +13,7 @@ TEST_FILES = [
     "test_create_update_delete.py",
     "test_posts.py",
     "test_sync_features.py",
+    "test_visibility.py",
 ]
 
 

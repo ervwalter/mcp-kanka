@@ -91,7 +91,7 @@ class TestFindEntities:
         assert entities[1]["name"] == "Test Charlie"
 
         mock_service.list_entities.assert_called_once_with(
-            "character", page=1, limit=0, last_sync=None
+            "character", page=1, limit=0, last_sync=None, related=True
         )
 
     @patch("mcp_kanka.operations.get_service")
@@ -148,7 +148,7 @@ class TestFindEntities:
         assert entities[1]["name"] == "Bob"
 
         mock_service.list_entities.assert_called_once_with(
-            "character", page=1, limit=0, last_sync=None
+            "character", page=1, limit=0, last_sync=None, related=True
         )
 
     @patch("mcp_kanka.operations.filter_entities_by_name")

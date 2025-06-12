@@ -151,6 +151,7 @@ class KankaService:
         page: int = 1,
         limit: int = 100,
         last_sync: str | None = None,
+        related: bool = False,
     ) -> list[Entity]:
         """
         List entities of a specific type.
@@ -160,6 +161,7 @@ class KankaService:
             page: Page number
             limit: Results per page (0 for all)
             last_sync: ISO 8601 timestamp to get only entities modified after this time
+            related: Include related data (posts, attributes, etc.)
 
         Returns:
             List of entity objects
@@ -178,7 +180,9 @@ class KankaService:
                 all_entities = []
                 current_page = 1
                 while True:
-                    batch = manager.list(page=current_page, limit=100, **filters)
+                    batch = manager.list(
+                        page=current_page, limit=100, related=related, **filters
+                    )
                     if not batch:
                         break
                     all_entities.extend(batch)
@@ -188,7 +192,9 @@ class KankaService:
                 entities = all_entities
             else:
                 # Get paginated results
-                entities = manager.list(page=page, limit=limit, **filters)
+                entities = manager.list(
+                    page=page, limit=limit, related=related, **filters
+                )
 
             return list(entities)
 
@@ -671,6 +677,10 @@ class KankaService:
                     # Unknown format
                     tag_names.append(str(tag_item))
             result["tags"] = tag_names
+
+        # Handle posts if present (when related=True)
+        if hasattr(entity, "posts") and entity.posts is not None:
+            result["posts"] = [self._post_to_dict(post) for post in entity.posts]
 
         return result
 

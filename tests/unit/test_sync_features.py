@@ -159,7 +159,7 @@ class TestTimestampSupport:
 
         # Verify service was called with last_sync
         mock_service.list_entities.assert_called_with(
-            "character", page=1, limit=0, last_sync=last_sync_time
+            "character", page=1, limit=0, last_sync=last_sync_time, related=True
         )
 
 

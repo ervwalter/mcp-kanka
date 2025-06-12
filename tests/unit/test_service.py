@@ -135,7 +135,9 @@ class TestKankaService:
 
         assert len(results) == 2
         assert results[0].name == "Alice"
-        self.mock_client.characters.list.assert_called_once_with(page=1, limit=10)
+        self.mock_client.characters.list.assert_called_once_with(
+            page=1, limit=10, related=False
+        )
 
     def test_list_entities_all(self):
         """Test listing all entities (limit=0)."""
@@ -155,7 +157,9 @@ class TestKankaService:
 
         assert len(results) == 5
         # Should have called list with limit=100
-        self.mock_client.locations.list.assert_called_with(page=1, limit=100)
+        self.mock_client.locations.list.assert_called_with(
+            page=1, limit=100, related=False
+        )
 
     def test_create_entity_basic(self):
         """Test creating a basic entity."""
@@ -168,7 +172,13 @@ class TestKankaService:
         mock_entity.is_private = False
         mock_entity.tags = []
         mock_entity.entry = "<p>Test description</p>"
+        mock_entity.created_at = datetime.now()
+        mock_entity.updated_at = datetime.now()
+        mock_entity.posts = None  # No posts by default
         self.mock_client.characters.create.return_value = mock_entity
+
+        # Initialize tag cache to empty
+        self.service._tag_cache = {}
 
         # Test create
         result = self.service.create_entity(
@@ -212,7 +222,13 @@ class TestKankaService:
         mock_entity.name = "Test Character"
         mock_entity.tags = [1, 2]
         mock_entity.entry = "<p>Test description</p>"  # Need entry for conversion
+        mock_entity.created_at = datetime.now()
+        mock_entity.updated_at = datetime.now()
+        mock_entity.posts = None  # No posts by default
         self.mock_client.characters.create.return_value = mock_entity
+
+        # Initialize tag cache
+        self.service._tag_cache = {}
 
         # Test create with tags
         self.service.create_entity(
@@ -348,6 +364,12 @@ class TestKankaService:
         mock_entity.tags = [tag1, tag2]
 
         mock_entity.entry = "<p>HTML content</p>"
+        mock_entity.created_at = datetime.now()
+        mock_entity.updated_at = datetime.now()
+        mock_entity.posts = None  # No posts by default
+
+        # Initialize tag cache
+        self.service._tag_cache = {}
 
         # Test conversion
         result = self.service._entity_to_dict(mock_entity, "character")
@@ -399,6 +421,10 @@ class TestKankaService:
         mock_entity.entry = None
         mock_entity.created_at = datetime(2023, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
         mock_entity.updated_at = datetime(2023, 6, 15, 14, 30, 0, tzinfo=timezone.utc)
+        mock_entity.posts = None  # No posts by default
+
+        # Initialize tag cache
+        self.service._tag_cache = {}
 
         # Test conversion
         result = self.service._entity_to_dict(mock_entity, "character")
@@ -446,7 +472,7 @@ class TestKankaService:
 
         # Verify lastSync was passed
         self.mock_client.characters.list.assert_called_with(
-            page=1, limit=30, lastSync=last_sync_time
+            page=1, limit=30, related=False, lastSync=last_sync_time
         )
 
         assert len(entities) == 1

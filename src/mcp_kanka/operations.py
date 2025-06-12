@@ -153,6 +153,7 @@ class KankaOperations:
                         page=1,
                         limit=0,
                         last_sync=last_synced,
+                        related=include_full,
                     )
                     for obj in entity_objects:
                         entity_dict = self.service._entity_to_dict(obj, entity_type)
@@ -174,7 +175,11 @@ class KankaOperations:
                     for et in entity_types:
                         try:
                             entity_objects = self.service.list_entities(
-                                et, page=1, limit=0, last_sync=last_synced
+                                et,
+                                page=1,
+                                limit=0,
+                                last_sync=last_synced,
+                                related=include_full,
                             )
                             for obj in entity_objects:
                                 entity_dict = self.service._entity_to_dict(obj, et)
@@ -215,6 +220,7 @@ class KankaOperations:
                     page=1,
                     limit=0,
                     last_sync=last_synced,
+                    related=include_full,
                 )
 
                 # Convert to dictionaries

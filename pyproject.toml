@@ -124,7 +124,7 @@ select = [
     "E",     # pycodestyle errors
     "W",     # pycodestyle warnings
     "F",     # pyflakes
-    "I",     # isort
+    # "I",     # isort - disabled, using standalone isort
     "B",     # flake8-bugbear
     "C4",    # flake8-comprehensions
     "UP",    # pyupgrade

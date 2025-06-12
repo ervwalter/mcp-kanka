@@ -468,22 +468,19 @@ class KankaService:
             entity_type = entity_data["entity_type"]
             manager = getattr(self.client, self.API_ENDPOINT_MAP[entity_type])
 
-            # Prepare post data
-            data: dict[str, Any] = {"name": name}
+            # Convert markdown to HTML if entry provided
+            html_entry = self.converter.markdown_to_html(entry) if entry else None
 
             # Set visibility based on is_hidden
-            if is_hidden:
-                # visibility_id 2 = admin only
-                data["visibility_id"] = 2
-            else:
-                # visibility_id 1 = all (default)
-                data["visibility_id"] = 1
-
-            if entry:
-                data["entry"] = self.converter.markdown_to_html(entry)
+            visibility_id = 2 if is_hidden else 1
 
             # Create post - use entity_id, not the type-specific id
-            post = manager.create_post(entity_id, **data)
+            post = manager.create_post(
+                entity_id,
+                name=name,
+                entry=html_entry or "",
+                visibility_id=visibility_id,
+            )
 
             return {
                 "post_id": post.id,
@@ -525,18 +522,21 @@ class KankaService:
             manager = getattr(self.client, self.API_ENDPOINT_MAP[entity_type])
 
             # Prepare update data
-            data: dict[str, Any] = {"name": name}
+            kwargs: dict[str, Any] = {"name": name}
 
             if entry is not None:
-                data["entry"] = self.converter.markdown_to_html(entry)
+                kwargs["entry"] = self.converter.markdown_to_html(entry)
 
             # Handle visibility
             # For posts, use visibility_id
+            visibility_id = None
             if is_hidden is not None:
-                data["visibility_id"] = 2 if is_hidden else 1
+                visibility_id = 2 if is_hidden else 1
 
             # Update post - use entity_id, not the type-specific id
-            manager.update_post(entity_id, post_id, **data)
+            manager.update_post(
+                entity_id, post_id, visibility_id=visibility_id, **kwargs
+            )
             return True
 
         except Exception as e:

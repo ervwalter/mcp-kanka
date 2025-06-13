@@ -5,7 +5,6 @@ An MCP server that provides tools for interacting with Kanka campaigns.
 """
 
 from ._version import __version__
-
 from .converter import ContentConverter
 from .operations import KankaOperations, create_operations
 from .resources import get_kanka_context

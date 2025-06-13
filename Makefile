@@ -22,9 +22,16 @@ install:
 test:
 	pytest tests/ -v
 
+# Run tests for CI (with coverage)
+test-ci:
+	pytest tests/ -v --cov=mcp_kanka --cov-report=xml --cov-report=term
+
 # Run linting
 lint:
 	ruff check .
+
+# Check formatting without modifying files
+format-check:
 	black --check .
 	isort --check-only .
 

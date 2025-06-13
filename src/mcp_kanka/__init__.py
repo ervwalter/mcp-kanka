@@ -4,7 +4,7 @@ Kanka MCP Server
 An MCP server that provides tools for interacting with Kanka campaigns.
 """
 
-__version__ = "0.1.0"
+from ._version import __version__
 
 from .converter import ContentConverter
 from .operations import KankaOperations, create_operations

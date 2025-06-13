@@ -7,6 +7,8 @@ ruff>=0.1.0
 black>=23.0.0
 isort>=5.12.0
 build>=1.0.0
+bump2version>=1.0.1
+twine>=4.0.0
 
 # Type stubs
 types-beautifulsoup4

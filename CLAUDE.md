@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an MCP (Model Context Protocol) server that provides AI assistants with tools to interact with Kanka campaigns. It exposes 8 tools for CRUD operations on Kanka entities (characters, locations, organizations, etc.) and implements client-side filtering, fuzzy search, and markdown/HTML conversion.
+This is an MCP (Model Context Protocol) server that provides AI assistants with tools to interact with Kanka campaigns. It exposes 9 tools for CRUD operations on Kanka entities (characters, locations, organizations, etc.) and implements client-side filtering, fuzzy search, and markdown/HTML conversion.
 
 ## Key Development Commands
 

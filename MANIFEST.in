@@ -1,0 +1,10 @@
+include README.md
+include LICENSE
+include requirements.txt
+include dev-requirements.txt
+recursive-include src/mcp_kanka *.py
+recursive-include tests *.py
+exclude tests/integration/.env
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store

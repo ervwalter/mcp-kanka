@@ -2,6 +2,8 @@
 
 MCP (Model Context Protocol) server for Kanka API integration. This server provides AI assistants with tools to interact with Kanka campaigns, enabling CRUD operations on various entity types like characters, locations, organizations, and more.
 
+This package is designed specifically to serve the needs of [Teghrim](https://github.com/ervwalter/teghrim) but may be useful to others working with Kanka and MCP.
+
 ## Features
 
 - **Entity Management**: Create, read, update, and delete Kanka entities
@@ -21,7 +23,7 @@ MCP (Model Context Protocol) server for Kanka API integration. This server provi
 
 ## Installation
 
-### From PyPI (when published)
+### From PyPI
 ```bash
 pip install mcp-kanka
 ```
@@ -77,7 +79,7 @@ claude mcp add kanka \
 - **Journal** - Session summaries, narratives, chronicles
 - **Quest** - Missions, objectives, story arcs
 
-## Available Tools
+## Available Tools (9 Total)
 
 ### Entity Operations
 
@@ -334,15 +336,15 @@ The MCP server requires:
 
 The server provides a `kanka://context` resource that explains Kanka's structure and capabilities.
 
-## Version Notes
+## Version History
 
-### v1.1.0 (Upcoming)
-- **Breaking Change**: Name filtering now uses partial matching by default
-  - `name="Test"` now matches "Test Character", "Testing", etc. (like Kanka API)
-  - Use `name_exact=True` for exact matching (old behavior)
-  - This makes the MCP tool behavior consistent with Kanka API expectations
-- Added `name_exact` parameter for exact name matching when needed
-- Improved clarity in tool descriptions
+### v0.1.0
+- Initial release
+- Full CRUD operations for Kanka entities
+- Batch operations support
+- Markdown/HTML conversion with entity mention preservation
+- Sync support with timestamp tracking
+- Comprehensive search and filtering capabilities
 
 ## License
 

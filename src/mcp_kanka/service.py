@@ -175,26 +175,89 @@ class KankaService:
                 filters["lastSync"] = last_sync
 
             if limit == 0:
-                # Get all results by using a high limit
-                # The API supports up to 100 per page, so we'll need to paginate
+                # Get all results by paginating through all API pages
+                # Use the proper pagination info from the SDK
                 all_entities = []
                 current_page = 1
+                logger.debug(
+                    f"Starting pagination for {entity_type} with related={related}"
+                )
+
                 while True:
-                    batch = manager.list(
-                        page=current_page, limit=100, related=related, **filters
-                    )
-                    if not batch:
+                    logger.debug(f"Fetching page {current_page}")
+                    try:
+                        batch = manager.list(
+                            page=current_page, related=related, **filters
+                        )
+                        logger.debug(
+                            f"Page {current_page} returned {len(batch)} entities"
+                        )
+
+                        # Add current page results
+                        all_entities.extend(batch)
+
+                        # Check if there's a next page using SDK pagination info
+                        if not manager.has_next_page:
+                            logger.debug("No more pages, stopping pagination")
+                            break
+
+                        current_page += 1
+
+                        # Safety limit to prevent infinite loops
+                        if current_page > 50:
+                            logger.warning(
+                                f"Hit safety limit of 50 pages for {entity_type}"
+                            )
+                            break
+
+                    except Exception as e:
+                        logger.error(
+                            f"Error fetching page {current_page} for {entity_type}: {e}"
+                        )
                         break
-                    all_entities.extend(batch)
-                    if len(batch) < 100:
-                        break
-                    current_page += 1
+
+                logger.debug(
+                    f"Pagination complete for {entity_type}: {len(all_entities)} total entities"
+                )
                 entities = all_entities
             else:
-                # Get paginated results
-                entities = manager.list(
-                    page=page, limit=limit, related=related, **filters
+                # Get limited results (client-side limiting)
+                # Fetch pages until we have enough entities
+                all_entities = []
+                current_page = page  # Start from requested page
+                logger.debug(
+                    f"Fetching for client-side limit of {limit} {entity_type}s starting from page {page}"
                 )
+
+                while len(all_entities) < limit:
+                    try:
+                        batch = manager.list(
+                            page=current_page, related=related, **filters
+                        )
+
+                        all_entities.extend(batch)
+
+                        # Stop if no more pages or we have enough
+                        if not manager.has_next_page or len(all_entities) >= limit:
+                            break
+
+                        current_page += 1
+
+                        # Safety limit
+                        if current_page > 50:
+                            logger.warning(
+                                f"Hit safety limit of 50 pages for {entity_type}"
+                            )
+                            break
+
+                    except Exception as e:
+                        logger.error(
+                            f"Error fetching page {current_page} for {entity_type}: {e}"
+                        )
+                        break
+
+                # Apply client-side limit
+                entities = all_entities[:limit]
 
             return list(entities)
 

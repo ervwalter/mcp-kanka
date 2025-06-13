@@ -1,7 +1,7 @@
 """Unit tests for the service module with mocked KankaClient."""
 
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, PropertyMock, patch
 
 import pytest
 
@@ -129,15 +129,17 @@ class TestKankaService:
 
         mock_entities = [mock_entity1, mock_entity2]
         self.mock_client.characters.list.return_value = mock_entities
+        # Mock pagination properties
+        type(self.mock_client.characters).has_next_page = PropertyMock(
+            return_value=False
+        )
 
         # Test list with pagination
         results = self.service.list_entities("character", page=1, limit=10)
 
         assert len(results) == 2
         assert results[0].name == "Alice"
-        self.mock_client.characters.list.assert_called_once_with(
-            page=1, limit=10, related=False
-        )
+        self.mock_client.characters.list.assert_called_once_with(page=1, related=False)
 
     def test_list_entities_all(self):
         """Test listing all entities (limit=0)."""
@@ -151,15 +153,17 @@ class TestKankaService:
 
         # Mock pagination - return all on first page
         self.mock_client.locations.list.return_value = mock_entities
+        # Mock pagination properties
+        type(self.mock_client.locations).has_next_page = PropertyMock(
+            return_value=False
+        )
 
         # Test list all
         results = self.service.list_entities("location", page=1, limit=0)
 
         assert len(results) == 5
-        # Should have called list with limit=100
-        self.mock_client.locations.list.assert_called_with(
-            page=1, limit=100, related=False
-        )
+        # Should have called list without limit (pagination uses has_next_page)
+        self.mock_client.locations.list.assert_called_with(page=1, related=False)
 
     def test_create_entity_basic(self):
         """Test creating a basic entity."""
@@ -463,6 +467,10 @@ class TestKankaService:
         mock_entity.updated_at = datetime(2023, 7, 1, 12, 0, 0, tzinfo=timezone.utc)
 
         self.mock_client.characters.list.return_value = [mock_entity]
+        # Mock pagination properties
+        type(self.mock_client.characters).has_next_page = PropertyMock(
+            return_value=False
+        )
 
         # Test with last_sync
         last_sync_time = "2023-06-01T00:00:00Z"
@@ -470,9 +478,9 @@ class TestKankaService:
             "character", page=1, limit=30, last_sync=last_sync_time
         )
 
-        # Verify lastSync was passed
+        # Verify lastSync was passed (note: no limit passed to SDK since we use client-side limiting)
         self.mock_client.characters.list.assert_called_with(
-            page=1, limit=30, related=False, lastSync=last_sync_time
+            page=1, related=False, lastSync=last_sync_time
         )
 
         assert len(entities) == 1
@@ -488,6 +496,11 @@ class TestKankaService:
             mock_entities_page1,
             mock_entities_page2[:50],  # Only 50 items in page 2, so we know we're done
         ]
+
+        # Mock pagination properties - first call has next page, second doesn't
+        type(self.mock_client.characters).has_next_page = PropertyMock(
+            side_effect=[True, False]
+        )
 
         # Test with limit=0 (get all) and last_sync
         last_sync_time = "2023-06-01T00:00:00Z"

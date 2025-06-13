@@ -118,3 +118,24 @@ class TestContentConverter:
         # Should preserve both formatting and mention
         assert "[entity:123|The Guide]" in html
         assert "<strong>" in html or "<b>" in html
+
+    def test_html_to_markdown_removes_ins_tags(self):
+        """Test that empty <ins></ins> tags are removed during HTML to markdown conversion."""
+        html = "<p>[entity:123|Character<ins></ins><ins></ins>] does something with [entity:456|Location<ins></ins>].</p>"
+        markdown = self.converter.html_to_markdown(html)
+
+        # Should remove all <ins></ins> tags
+        assert "<ins></ins>" not in markdown
+        assert "[entity:123|Character]" in markdown
+        assert "[entity:456|Location]" in markdown
+
+    def test_html_to_markdown_removes_other_empty_tags(self):
+        """Test that other empty HTML tags are also removed."""
+        html = "<p>Text with <span></span> empty <div></div> tags <em></em>.</p>"
+        markdown = self.converter.html_to_markdown(html)
+
+        # Should remove empty tags
+        assert "<span></span>" not in markdown
+        assert "<div></div>" not in markdown
+        assert "<em></em>" not in markdown
+        assert "Text with" in markdown and "emptytags" in markdown

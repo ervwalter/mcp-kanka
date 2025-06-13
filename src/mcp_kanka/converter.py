@@ -78,6 +78,9 @@ class ContentConverter:
         # Restore mentions
         markdown_text = self._restore_mentions(markdown_text, mentions)
 
+        # Clean up unwanted HTML tags that markdownify leaves behind
+        markdown_text = self._clean_leftover_html(markdown_text)
+
         # Clean up extra whitespace
         markdown_text = re.sub(r"\n{3,}", "\n\n", markdown_text.strip())
 
@@ -132,5 +135,23 @@ class ContentConverter:
             else:
                 mention = f"[entity:{entity_id}]"
             content = content.replace(placeholder, mention)
+
+        return content
+
+    def _clean_leftover_html(self, content: str) -> str:
+        """
+        Clean up unwanted HTML tags that markdownify doesn't handle properly.
+
+        Args:
+            content: Markdown content that may contain leftover HTML tags
+
+        Returns:
+            Cleaned content with unwanted HTML tags removed
+        """
+        # Remove empty <ins></ins> tags that accumulate during conversion
+        content = re.sub(r"<ins></ins>", "", content)
+
+        # Remove any other empty HTML tags that might cause issues
+        content = re.sub(r"<(\w+)></\1>", "", content)
 
         return content

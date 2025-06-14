@@ -1,14 +1,14 @@
 # Development dependencies
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-pytest-cov>=4.1.0
-mypy>=1.5.0
-ruff>=0.1.0
-black>=23.0.0
-isort>=5.12.0
-build>=1.0.0
-bump2version>=1.0.1
-twine>=4.0.0
+pytest==8.4.0
+pytest-asyncio==1.0.0
+pytest-cov==6.2.1
+mypy==1.16.0
+ruff==0.11.13
+black==25.1.0
+isort==6.0.1
+build==1.2.2.post1
+bump2version==1.0.1
+twine==6.1.0
 
 # Type stubs
 types-beautifulsoup4

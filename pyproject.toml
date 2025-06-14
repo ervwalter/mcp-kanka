@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools-scm"]
+requires = ["setuptools==80.9.0", "wheel", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,7 +7,7 @@ name = "mcp-kanka"
 version = "1.0.1"
 description = "MCP server for Kanka API integration"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = "==3.13.5"
 license = {text = "MIT"}
 authors = [
     {name = "Erv Walter", email = "erv@ewal.net"}
@@ -23,12 +23,12 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "mcp>=1.1.3",
-    "python-kanka>=2.2.0",
-    "mistune>=3.0",
-    "beautifulsoup4>=4.12",
-    "python-dotenv>=1.0.0",
-    "markdownify>=0.11.6",
+    "mcp==1.9.3",
+    "python-kanka==2.2.0",
+    "mistune==3.1.3",
+    "beautifulsoup4==4.13.4",
+    "python-dotenv==1.1.0",
+    "markdownify==1.1.0",
 ]
 
 [project.urls]

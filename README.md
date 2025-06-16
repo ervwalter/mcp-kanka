@@ -18,7 +18,7 @@ This package is designed specifically to serve the needs of [Teghrim](https://gi
 
 ## Requirements
 
-- Python 3.10 or higher
+- Python 3.10 or higher (3.13.5 recommended)
 - Kanka API token and campaign ID
 
 ## Installation
@@ -28,7 +28,15 @@ This package is designed specifically to serve the needs of [Teghrim](https://gi
 pip install mcp-kanka
 ```
 
-### From Source
+### From Source (using uv)
+```bash
+git clone https://github.com/ervwalter/mcp-kanka.git
+cd mcp-kanka
+uv sync --all-groups
+uv pip install -e .
+```
+
+### From Source (using pip)
 ```bash
 git clone https://github.com/ervwalter/mcp-kanka.git
 cd mcp-kanka

@@ -8,9 +8,14 @@ This is an MCP (Model Context Protocol) server that provides AI assistants with 
 
 ## Key Development Commands
 
+This project uses [uv](https://docs.astral.sh/uv/) for dependency management. All commands are wrapped in the Makefile for convenience:
+
 ```bash
-# Install development environment
+# Install development environment (uses uv sync)
 make install
+
+# Sync dependencies without updating lock file
+make sync
 
 # Run tests
 make test
@@ -32,6 +37,61 @@ make coverage
 
 # Clean up generated files
 make clean
+```
+
+### Direct uv commands
+
+```bash
+# Install dependencies
+uv sync --all-groups
+
+# Run a command in the environment
+uv run pytest
+
+# Add a new dependency
+uv add package-name
+
+# Add a dev dependency
+uv add --group dev package-name
+
+# Update dependencies
+uv lock --upgrade
+
+# Build the package
+uv build
+```
+
+## Git Commit Message Format
+
+This project uses conventional commits format:
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Types:**
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation only changes
+- `style`: Code style changes (formatting, missing semicolons, etc)
+- `refactor`: Code change that neither fixes a bug nor adds a feature
+- `test`: Adding missing tests or correcting existing tests
+- `chore`: Changes to build process, dependencies, or auxiliary tools
+
+**Examples:**
+- `feat: add sync/timestamp features and change name filtering`
+- `fix: correct pagination logic to use SDK properties`
+- `chore(deps): update dependency python to v3.13.5`
+- `refactor: add operations layer for reusable business logic`
+
+**Note:** When Claude generates commits, they should include the attribution at the end of the commit body:
+```
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ## Architecture Design

@@ -491,7 +491,7 @@ dev = [
     { name = "bump2version", specifier = "==1.0.1" },
     { name = "isort", specifier = "==6.0.1" },
     { name = "mypy", specifier = "==1.16.0" },
-    { name = "pre-commit", specifier = ">=3.5.0" },
+    { name = "pre-commit", specifier = "==4.2.0" },
     { name = "pytest", specifier = "==8.4.0" },
     { name = "pytest-asyncio", specifier = "==1.0.0" },
     { name = "pytest-cov", specifier = "==6.2.1" },

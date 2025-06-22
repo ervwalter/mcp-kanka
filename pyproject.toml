@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-kanka"
-version = "1.0.1"
+version = "1.1.0"
 description = "MCP server for Kanka API integration"
 readme = "README.md"
 requires-python = "==3.13.5"

@@ -14,6 +14,7 @@ TEST_FILES = [
     "test_posts.py",
     "test_sync_features.py",
     "test_visibility.py",
+    "test_embed_preservation.py",
 ]
 
 

@@ -139,3 +139,97 @@ class TestContentConverter:
         assert "<div></div>" not in markdown
         assert "<em></em>" not in markdown
         assert "Text with" in markdown and "emptytags" in markdown
+
+    def test_html_to_markdown_preserves_youtube_embed(self):
+        """Test that YouTube iframe embeds are preserved during HTML to Markdown conversion."""
+        html = """<p>Check out this video:</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+        frameborder="0" allowfullscreen></iframe>
+<p>Pretty cool, right?</p>"""
+
+        md = self.converter.html_to_markdown(html)
+
+        # The iframe should be preserved in the markdown
+        assert (
+            '<iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ"'
+            in md
+        )
+        assert 'frameborder="0" allowfullscreen></iframe>' in md
+        assert "Check out this video:" in md
+        assert "Pretty cool, right?" in md
+
+    def test_html_to_markdown_preserves_multiple_embeds(self):
+        """Test that multiple embeds are preserved."""
+        html = """<p>Multiple embeds:</p>
+<iframe src="https://player.vimeo.com/video/123456"></iframe>
+<p>And another:</p>
+<embed src="game.swf" type="application/x-shockwave-flash" />
+<video controls><source src="movie.mp4" type="video/mp4"></video>"""
+
+        md = self.converter.html_to_markdown(html)
+
+        # All embeds should be preserved
+        assert '<iframe src="https://player.vimeo.com/video/123456"></iframe>' in md
+        assert '<embed src="game.swf" type="application/x-shockwave-flash" />' in md
+        assert '<video controls><source src="movie.mp4" type="video/mp4"></video>' in md
+
+    def test_markdown_to_html_preserves_embeds(self):
+        """Test that embeds in markdown pass through to HTML unchanged."""
+        md = """# My Content
+
+Here's a video:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/test123"></iframe>
+
+And some more text."""
+
+        html = self.converter.markdown_to_html(md)
+
+        # The iframe should pass through unchanged
+        assert (
+            '<iframe width="560" height="315" src="https://www.youtube.com/embed/test123"></iframe>'
+            in html
+        )
+        assert "<h1>My Content</h1>" in html
+
+    def test_embeds_and_mentions_together(self):
+        """Test that embeds and mentions work together."""
+        html = """<p>Check out [entity:123|this character] in the video:</p>
+<iframe src="https://youtube.com/embed/abc"></iframe>
+<p>Also see [entity:456]</p>"""
+
+        md = self.converter.html_to_markdown(html)
+
+        # Both mentions and embeds should be preserved
+        assert "[entity:123|this character]" in md
+        assert "[entity:456]" in md
+        assert '<iframe src="https://youtube.com/embed/abc"></iframe>' in md
+
+    def test_malformed_embeds_handled_gracefully(self):
+        """Test that malformed embeds don't break conversion."""
+        html = """<p>Normal text</p>
+<iframe>Missing src</iframe>
+<p>More text</p>"""
+
+        md = self.converter.html_to_markdown(html)
+
+        # Should handle the malformed iframe
+        assert "Normal text" in md
+        assert "More text" in md
+        # The malformed iframe should still be preserved
+        assert "<iframe>Missing src</iframe>" in md
+
+    def test_audio_embed_preservation(self):
+        """Test that audio elements are preserved."""
+        html = """<p>Listen to this:</p>
+<audio controls>
+  <source src="audio.mp3" type="audio/mpeg">
+  Your browser does not support audio.
+</audio>"""
+
+        md = self.converter.html_to_markdown(html)
+
+        # Audio element should be preserved
+        assert "<audio controls>" in md
+        assert '<source src="audio.mp3" type="audio/mpeg">' in md
+        assert "</audio>" in md

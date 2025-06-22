@@ -363,6 +363,9 @@ class KankaOperations:
                     entry=entity_input.get("entry"),
                     tags=entity_input.get("tags"),
                     is_hidden=entity_input.get("is_hidden"),
+                    is_completed=entity_input.get("is_completed"),
+                    image_uuid=entity_input.get("image_uuid"),
+                    header_uuid=entity_input.get("header_uuid"),
                 )
 
                 result: CreateEntityResult = {
@@ -435,6 +438,9 @@ class KankaOperations:
                     entry=update.get("entry"),
                     tags=update.get("tags"),
                     is_hidden=update.get("is_hidden"),
+                    is_completed=update.get("is_completed"),
+                    image_uuid=update.get("image_uuid"),
+                    header_uuid=update.get("header_uuid"),
                 )
 
                 result: UpdateEntityResult = {
@@ -488,6 +494,17 @@ class KankaOperations:
                         "success": True,
                         "error": None,
                     }
+
+                    # Add quest-specific fields
+                    if entity.get("entity_type") == "quest":
+                        result["is_completed"] = entity.get("is_completed")
+
+                    # Add all image fields (they should always be present from service layer)
+                    result["image"] = entity.get("image")
+                    result["image_full"] = entity.get("image_full")
+                    result["image_thumb"] = entity.get("image_thumb")
+                    result["image_uuid"] = entity.get("image_uuid")
+                    result["header_uuid"] = entity.get("header_uuid")
 
                     if include_posts:
                         result["posts"] = entity.get("posts", [])

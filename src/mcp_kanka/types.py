@@ -154,6 +154,12 @@ class EntityFull(TypedDict, total=False):
     created_at: str  # ISO 8601 timestamp
     updated_at: str  # ISO 8601 timestamp
     match_score: float | None  # Only when name_fuzzy=true
+    is_completed: bool | None  # For quests only
+    image: str | None  # Local path to the picture
+    image_full: str | None  # URL to the full picture
+    image_thumb: str | None  # URL to the thumbnail
+    image_uuid: str | None  # Image gallery UUID
+    header_uuid: str | None  # Header image gallery UUID
 
 
 class PostData(TypedDict):
@@ -223,6 +229,12 @@ class GetEntityResult(TypedDict, total=False):
     posts: list[PostData] | None
     success: bool
     error: str | None
+    is_completed: bool | None  # For quests only
+    image: str | None  # Local path to the picture
+    image_full: str | None  # URL to the full picture
+    image_thumb: str | None  # URL to the thumbnail
+    image_uuid: str | None  # Image gallery UUID
+    header_uuid: str | None  # Header image gallery UUID
 
 
 class DeleteEntityResult(TypedDict):

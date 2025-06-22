@@ -354,6 +354,9 @@ class KankaService:
         entry: str | None = None,
         tags: list[str] | None = None,
         is_hidden: bool | None = None,
+        is_completed: bool | None = None,
+        image_uuid: str | None = None,
+        header_uuid: str | None = None,
     ) -> dict[str, Any]:
         """
         Create a new entity.
@@ -365,6 +368,9 @@ class KankaService:
             entry: Description in Markdown
             tags: List of tag names
             is_hidden: Whether entity should be hidden from players (admin-only)
+            is_completed: Whether quest is completed (quests only)
+            image_uuid: Image gallery UUID for entity image
+            header_uuid: Image gallery UUID for entity header
 
         Returns:
             Created entity data
@@ -398,6 +404,16 @@ class KankaService:
                 tag_ids = self._get_or_create_tag_ids(tags)
                 data["tags"] = tag_ids
 
+            # Handle quest-specific field
+            if entity_type == "quest" and is_completed is not None:
+                data["is_completed"] = is_completed
+
+            # Handle image fields
+            if image_uuid is not None:
+                data["image_uuid"] = image_uuid
+            if header_uuid is not None:
+                data["header_uuid"] = header_uuid
+
             # Create entity
             entity = manager.create(**data)
 
@@ -424,6 +440,9 @@ class KankaService:
         entry: str | None = None,
         tags: list[str] | None = None,
         is_hidden: bool | None = None,
+        is_completed: bool | None = None,
+        image_uuid: str | None = None,
+        header_uuid: str | None = None,
     ) -> bool:
         """
         Update an existing entity.
@@ -435,6 +454,9 @@ class KankaService:
             entry: Description in Markdown
             tags: List of tag names
             is_hidden: Whether entity should be hidden from players (admin-only)
+            is_completed: Whether quest is completed (quests only)
+            image_uuid: Image gallery UUID for entity image
+            header_uuid: Image gallery UUID for entity header
 
         Returns:
             True if successful
@@ -467,6 +489,16 @@ class KankaService:
             if tags is not None:
                 tag_ids = self._get_or_create_tag_ids(tags)
                 data["tags"] = tag_ids
+
+            # Handle quest-specific field
+            if entity_type == "quest" and is_completed is not None:
+                data["is_completed"] = is_completed
+
+            # Handle image fields
+            if image_uuid is not None:
+                data["image_uuid"] = image_uuid
+            if header_uuid is not None:
+                data["header_uuid"] = header_uuid
 
             # Update entity
             manager.update(entity_data["id"], **data)
@@ -788,6 +820,17 @@ class KankaService:
         # Handle posts if present (when related=True)
         if hasattr(entity, "posts") and entity.posts is not None:
             result["posts"] = [self._post_to_dict(post) for post in entity.posts]
+
+        # Handle quest-specific fields
+        if entity_type == "quest":
+            result["is_completed"] = getattr(entity, "is_completed", None)
+
+        # Handle image fields - always include all 5 fields
+        result["image"] = getattr(entity, "image", None)
+        result["image_full"] = getattr(entity, "image_full", None)
+        result["image_thumb"] = getattr(entity, "image_thumb", None)
+        result["image_uuid"] = getattr(entity, "image_uuid", None)
+        result["header_uuid"] = getattr(entity, "header_uuid", None)
 
         return result
 

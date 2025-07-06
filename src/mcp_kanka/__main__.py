@@ -387,7 +387,7 @@ async def list_tools() -> list[types.Tool]:
     ]
 
 
-@app.call_tool()  # type: ignore[no-untyped-call, misc]
+@app.call_tool()  # type: ignore[misc]
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
     """Handle tool calls."""
     logger.info(f"Tool called: {name} with arguments: {arguments}")

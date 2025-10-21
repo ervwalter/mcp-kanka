@@ -45,7 +45,7 @@ mcp-kanka = "mcp_kanka.cli:run"
 dev = [
     "pytest==8.4.1",
     "pytest-asyncio==1.0.0",
-    "pytest-cov==6.2.1",
+    "pytest-cov==7.0.0",
     "mypy==1.16.1",
     "ruff==0.12.2",
     "black==25.1.0",

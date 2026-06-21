@@ -779,7 +779,7 @@ class KankaService:
         Returns:
             Dictionary representation
         """
-        result = {
+        result: dict[str, Any] = {
             "id": entity.id,
             "entity_id": entity.entity_id,
             "name": entity.name,

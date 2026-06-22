@@ -24,7 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "mcp==1.27.2",
+    "mcp==1.28.0",
     "python-kanka==2.6.2",
     "mistune==3.2.1",
     "beautifulsoup4==4.15.0",

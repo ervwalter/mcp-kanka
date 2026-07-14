@@ -26,7 +26,7 @@ classifiers = [
 dependencies = [
     "mcp==1.28.1",
     "python-kanka==2.6.2",
-    "mistune==3.3.2",
+    "mistune==3.3.3",
     "beautifulsoup4==4.15.0",
     "python-dotenv==1.2.2",
     "markdownify==1.2.3",
@@ -50,7 +50,7 @@ dev = [
     "ruff==0.15.20",
     "black==26.5.1",
     "isort==8.0.1",
-    "build==1.5.0",
+    "build==1.5.1",
     "bump2version==1.0.1",
     "twine==6.2.0",
     "types-beautifulsoup4",

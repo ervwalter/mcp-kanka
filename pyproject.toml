@@ -28,7 +28,7 @@ dependencies = [
     "python-kanka==2.6.2",
     "mistune==3.3.4",
     "beautifulsoup4==4.15.0",
-    "python-dotenv==1.2.2",
+    "python-dotenv==1.2.3",
     "markdownify==1.2.3",
 ]
 

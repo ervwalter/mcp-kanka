@@ -1,4 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>ervwalter/renovate-config:auto-merge"]
+  "extends": ["github>ervwalter/renovate-config:auto-merge"],
+  "packageRules": [
+    {
+      "matchDepNames": ["mcp"],
+      "allowedVersions": "<2.0.0"
+    }
+  ]
 }

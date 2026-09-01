@@ -49,7 +49,7 @@ dev = [
     "mypy==2.3.1",
     "ruff==0.16.5",
     "black==26.5.1",
-    "isort==8.0.1",
+    "isort==9.0.1",
     "build==1.6.0",
     "bump2version==1.0.1",
     "twine==7.0.0",

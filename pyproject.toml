@@ -33,10 +33,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ervwalter/mcp-kanka"
-Documentation = "https://github.com/ervwalter/mcp-kanka#readme"
-Repository = "https://github.com/ervwalter/mcp-kanka"
-Issues = "https://github.com/ervwalter/mcp-kanka/issues"
+Homepage = "https://github.com/twistymaze/mcp-kanka"
+Documentation = "https://github.com/twistymaze/mcp-kanka#readme"
+Repository = "https://github.com/twistymaze/mcp-kanka"
+Issues = "https://github.com/twistymaze/mcp-kanka/issues"
 
 [project.scripts]
 mcp-kanka = "mcp_kanka.cli:run"

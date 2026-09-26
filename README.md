@@ -30,7 +30,7 @@ pip install mcp-kanka
 
 ### From Source (using uv)
 ```bash
-git clone https://github.com/ervwalter/mcp-kanka.git
+git clone https://github.com/twistymaze/mcp-kanka.git
 cd mcp-kanka
 uv sync --all-groups
 uv pip install -e .
@@ -38,7 +38,7 @@ uv pip install -e .
 
 ### From Source (using pip)
 ```bash
-git clone https://github.com/ervwalter/mcp-kanka.git
+git clone https://github.com/twistymaze/mcp-kanka.git
 cd mcp-kanka
 pip install -e .
 ```
@@ -274,7 +274,7 @@ result = await check_entity_updates(
 
 ```bash
 # Clone the repository
-git clone https://github.com/ervwalter/mcp-kanka.git
+git clone https://github.com/twistymaze/mcp-kanka.git
 cd mcp-kanka
 
 # Install development dependencies
